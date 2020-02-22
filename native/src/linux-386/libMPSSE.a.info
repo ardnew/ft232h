@@ -1,0 +1,276 @@
+	** build complete: libMPSSE.a (Sat Feb 22 15:13:28 CST 2020)
+
+In archive linux-386/libMPSSE.a:
+
+ftdi_infra.o:     file format elf32-i386
+architecture: i386, flags 0x00000011:
+HAS_RELOC, HAS_SYMS
+start address 0x00000000
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 ftdi_infra.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
+00000000 l    d  .rodata.str1.4	00000000 .rodata.str1.4
+00000000 l     O .rodata	0000000e __FUNCTION__.5269
+00000000 l    d  .ctors	00000000 .ctors
+00000000 l    d  .dtors	00000000 .dtors
+00000000 l    d  .rodata	00000000 .rodata
+00000000 l    d  .text.__x86.get_pc_thunk.bx	00000000 .text.__x86.get_pc_thunk.bx
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .note.GNU-stack	00000000 .note.GNU-stack
+00000000 l    d  .eh_frame	00000000 .eh_frame
+00000000 l       .rodata.str1.1	00000000 .LC0
+0000001a l       .rodata.str1.1	00000000 .LC3
+0000002f l       .rodata.str1.1	00000000 .LC4
+00000047 l       .rodata.str1.1	00000000 .LC5
+0000005c l       .rodata.str1.1	00000000 .LC6
+00000064 l       .rodata.str1.1	00000000 .LC7
+0000006d l       .rodata.str1.1	00000000 .LC8
+0000007c l       .rodata.str1.1	00000000 .LC9
+00000085 l       .rodata.str1.1	00000000 .LC10
+00000099 l       .rodata.str1.1	00000000 .LC11
+000000a5 l       .rodata.str1.1	00000000 .LC12
+000000b4 l       .rodata.str1.1	00000000 .LC13
+000000c7 l       .rodata.str1.1	00000000 .LC14
+000000d5 l       .rodata.str1.1	00000000 .LC15
+000000e7 l       .rodata.str1.1	00000000 .LC16
+000000ef l       .rodata.str1.1	00000000 .LC17
+000000f8 l       .rodata.str1.1	00000000 .LC18
+0000000d l       .rodata.str1.1	00000000 .LC1
+00000000 l       .rodata.str1.4	00000000 .LC2
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .group	00000000 .group
+00000000 g     F .text	00000006 Infra_DbgPrintStatus
+00000006 g     F .text	00000006 Infra_Delay
+0000000c g     F .text	00000201 Init_libMPSSE
+00000000 g     F .text.__x86.get_pc_thunk.bx	00000000 .hidden __x86.get_pc_thunk.bx
+00000000         *UND*	00000000 _GLOBAL_OFFSET_TABLE_
+00000000         *UND*	00000000 dlopen
+00000004       O *COM*	00000004 hdll_d2xx
+00000000         *UND*	00000000 dlsym
+00000040       O *COM*	00000020 varFunctionPtrLst
+00000000         *UND*	00000000 dlerror
+00000000         *UND*	00000000 __printf_chk
+00000000         *UND*	00000000 exit
+0000020d g     F .text	00000021 Cleanup_libMPSSE
+00000000         *UND*	00000000 dlclose
+0000022e g     F .text	00000019 my_init
+00000247 g     F .text	00000019 my_exit
+00000260 g     F .text	00000013 Infra_TestFunction
+
+
+
+ftdi_mid.o:     file format elf32-i386
+architecture: i386, flags 0x00000011:
+HAS_RELOC, HAS_SYMS
+start address 0x00000000
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 ftdi_mid.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+00000000 l    d  .text.__x86.get_pc_thunk.ax	00000000 .text.__x86.get_pc_thunk.ax
+00000000 l    d  .text.__x86.get_pc_thunk.bx	00000000 .text.__x86.get_pc_thunk.bx
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_ranges	00000000 .debug_ranges
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .note.GNU-stack	00000000 .note.GNU-stack
+00000000 l    d  .eh_frame	00000000 .eh_frame
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .group	00000000 .group
+00000000 l    d  .group	00000000 .group
+00000000 g     F .text	0000001e FT_CloseChannel
+00000000 g     F .text.__x86.get_pc_thunk.ax	00000000 .hidden __x86.get_pc_thunk.ax
+00000000         *UND*	00000000 _GLOBAL_OFFSET_TABLE_
+00000000         *UND*	00000000 varFunctionPtrLst
+0000001e g     F .text	0000002a FT_Channel_Read
+00000048 g     F .text	0000002a FT_Channel_Write
+00000072 g     F .text	0000008e Mid_CheckMPSSEAvailable
+00000100 g     F .text	0000012e FT_GetNumChannels
+00000000 g     F .text.__x86.get_pc_thunk.bx	00000000 .hidden __x86.get_pc_thunk.bx
+00000000         *UND*	00000000 malloc
+00000000         *UND*	00000000 free
+00000000         *UND*	00000000 .hidden __stack_chk_fail_local
+0000022e g     F .text	00000189 FT_GetChannelInfo
+00000000         *UND*	00000000 Infra_DbgPrintStatus
+000003b7 g     F .text	00000174 FT_OpenChannel
+0000052b g     F .text	0000001e Mid_ResetDevice
+00000549 g     F .text	00000020 Mid_PurgeDevice
+00000569 g     F .text	00000026 Mid_SetUSBParameters
+0000058f g     F .text	0000003a Mid_SetDeviceSpecialChar
+000005c9 g     F .text	00000026 Mid_SetDeviceTimeOut
+000005ef g     F .text	00000024 Mid_SetLatencyTimer
+00000613 g     F .text	00000022 Mid_ResetMPSSE
+00000635 g     F .text	00000022 Mid_EnableMPSSEIn
+00000657 g     F .text	00000235 Mid_SendReceiveCmdFromMPSSE
+00000000         *UND*	00000000 usleep
+0000088c g     F .text	00000069 Mid_SetGPIOLow
+000008f5 g     F .text	0000006a Mid_GetFtDeviceType
+0000095f g     F .text	00000139 Mid_SetClock
+00000a98 g     F .text	00000068 Mid_SetDeviceLoopbackState
+00000b00 g     F .text	00000136 Mid_EmptyDeviceInputBuff
+00000c36 g     F .text	000000c5 Mid_SyncMPSSE
+00000cfb g     F .text	00000386 FT_InitChannel
+00001081 g     F .text	00000069 FT_WriteGPIO
+000010ea g     F .text	000000ca FT_ReadGPIO
+000011b4 g     F .text	00000022 Mid_GetQueueStatus
+
+
+
+ftdi_i2c.o:     file format elf32-i386
+architecture: i386, flags 0x00000011:
+HAS_RELOC, HAS_SYMS
+start address 0x00000000
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 ftdi_i2c.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
+00000000 l    d  .rodata.str1.4	00000000 .rodata.str1.4
+00000068 l     O .rodata	00000013 __FUNCTION__.5414
+00000054 l     O .rodata	00000013 __FUNCTION__.5420
+00000044 l     O .rodata	00000010 __FUNCTION__.5426
+00000020 l     O .rodata	00000011 __FUNCTION__.5440
+00000034 l     O .rodata	00000010 __FUNCTION__.5435
+00000010 l     O .rodata	0000000f __FUNCTION__.5452
+00000000 l     O .rodata	00000010 __FUNCTION__.5467
+00000000 l    d  .rodata	00000000 .rodata
+00000000 l    d  .text.__x86.get_pc_thunk.bx	00000000 .text.__x86.get_pc_thunk.bx
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_ranges	00000000 .debug_ranges
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .note.GNU-stack	00000000 .note.GNU-stack
+00000000 l    d  .eh_frame	00000000 .eh_frame
+00000000 l       .rodata.str1.1	00000000 .LC0
+00000000 l       .rodata.str1.4	00000000 .LC1
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .group	00000000 .group
+00000000 g     F .text	00000070 I2C_GetNumChannels
+00000000 g     F .text.__x86.get_pc_thunk.bx	00000000 .hidden __x86.get_pc_thunk.bx
+00000000         *UND*	00000000 _GLOBAL_OFFSET_TABLE_
+00000000         *UND*	00000000 FT_GetNumChannels
+00000000         *UND*	00000000 __printf_chk
+00000000         *UND*	00000000 Infra_DbgPrintStatus
+00000070 g     F .text	00000078 I2C_GetChannelInfo
+00000000         *UND*	00000000 FT_GetChannelInfo
+000000e8 g     F .text	00000078 I2C_OpenChannel
+00000000         *UND*	00000000 FT_OpenChannel
+00000160 g     F .text	00000070 I2C_CloseChannel
+00000000         *UND*	00000000 FT_CloseChannel
+000001d0 g     F .text	00000143 I2C_Write8bitsAndGetAck
+00000000         *UND*	00000000 FT_Channel_Write
+00000000         *UND*	00000000 usleep
+00000000         *UND*	00000000 FT_Channel_Read
+00000000         *UND*	00000000 .hidden __stack_chk_fail_local
+00000313 g     F .text	00000170 I2C_Read8bitsAndGiveAck
+00000483 g     F .text	0000037b I2C_FastWrite
+00000000         *UND*	00000000 malloc
+00000000         *UND*	00000000 free
+00000000         *UND*	00000000 memcpy
+000007fe g     F .text	00000365 I2C_FastRead
+00000b63 g     F .text	00000063 I2C_WriteDeviceAddress
+00000bc6 g     F .text	00000006 I2C_SaveChannelConfig
+00000bcc g     F .text	00000163 I2C_InitChannel
+00000000         *UND*	00000000 FT_InitChannel
+00000d2f g     F .text	00000006 I2C_GetChannelConfig
+00000d35 g     F .text	000000ae I2C_Start
+00000de3 g     F .text	000000d2 I2C_Stop
+00000eb5 g     F .text	000002bb I2C_DeviceRead
+00000000         *UND*	00000000 Mid_PurgeDevice
+00001170 g     F .text	000002f0 I2C_DeviceWrite
+
+
+
+ftdi_spi.o:     file format elf32-i386
+architecture: i386, flags 0x00000011:
+HAS_RELOC, HAS_SYMS
+start address 0x00000000
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 ftdi_spi.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
+00000000 l    d  .rodata.str1.4	00000000 .rodata.str1.4
+00000080 l     O .rodata	00000013 __FUNCTION__.5410
+0000006c l     O .rodata	00000013 __FUNCTION__.5416
+0000005c l     O .rodata	00000010 __FUNCTION__.5422
+0000004c l     O .rodata	00000010 __FUNCTION__.5432
+00000038 l     O .rodata	00000011 __FUNCTION__.5449
+00000000 l     O .rodata	0000000d __FUNCTION__.5561
+00000010 l     O .rodata	0000000e __FUNCTION__.5523
+00000020 l     O .rodata	0000000a __FUNCTION__.5491
+0000002c l     O .rodata	00000009 __FUNCTION__.5461
+00000000 l    d  .rodata	00000000 .rodata
+00000000 l    d  .text.__x86.get_pc_thunk.ax	00000000 .text.__x86.get_pc_thunk.ax
+00000000 l    d  .text.__x86.get_pc_thunk.bx	00000000 .text.__x86.get_pc_thunk.bx
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .note.GNU-stack	00000000 .note.GNU-stack
+00000000 l    d  .eh_frame	00000000 .eh_frame
+00000000 l       .rodata.str1.1	00000000 .LC0
+00000000 l       .rodata.str1.4	00000000 .LC1
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .group	00000000 .group
+00000000 l    d  .group	00000000 .group
+00000000 g     F .text	0000006d SPI_GetNumChannels
+00000000 g     F .text.__x86.get_pc_thunk.bx	00000000 .hidden __x86.get_pc_thunk.bx
+00000000         *UND*	00000000 _GLOBAL_OFFSET_TABLE_
+00000000         *UND*	00000000 FT_GetNumChannels
+00000000         *UND*	00000000 __printf_chk
+00000000         *UND*	00000000 Infra_DbgPrintStatus
+0000006d g     F .text	00000078 SPI_GetChannelInfo
+00000000         *UND*	00000000 FT_GetChannelInfo
+000000e5 g     F .text	0000009b SPI_AddChannelConfig
+00000000 g     O .bss	00000004 ListHead
+00000000         *UND*	00000000 malloc
+00000180 g     F .text	00000099 SPI_OpenChannel
+00000000         *UND*	00000000 FT_OpenChannel
+00000219 g     F .text	00000089 SPI_DelChannelConfig
+00000000         *UND*	00000000 free
+000002a2 g     F .text	0000005e SPI_SaveChannelConfig
+00000000 g     F .text.__x86.get_pc_thunk.ax	00000000 .hidden __x86.get_pc_thunk.ax
+00000300 g     F .text	0000018b SPI_InitChannel
+00000000         *UND*	00000000 FT_InitChannel
+00000000         *UND*	00000000 FT_Channel_Write
+00000000         *UND*	00000000 .hidden __stack_chk_fail_local
+0000048b g     F .text	00000044 SPI_GetChannelConfig
+000004cf g     F .text	0000013e SPI_CloseChannel
+00000000         *UND*	00000000 FT_CloseChannel
+0000060d g     F .text	00000145 SPI_ChangeCS
+00000752 g     F .text	00000006 SPI_DisplayList
+00000758 g     F .text	00000152 SPI_ToggleCS
+00000000         *UND*	00000000 usleep
+000008aa g     F .text	00000471 SPI_ReadWrite
+00000000         *UND*	00000000 FT_Channel_Read
+00000d1b g     F .text	000000df SPI_IsBusy
+00000dfa g     F .text	0000013e SPI_Write8bits
+00000f38 g     F .text	00000397 SPI_Write
+000012cf g     F .text	00000187 SPI_Read8bits
+00001456 g     F .text	00000384 SPI_Read
+
+
