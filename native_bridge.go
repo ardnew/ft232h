@@ -255,7 +255,7 @@ func _SPI_InitChannel(spi *SPI) error {
 		LatencyTimer:  C.uint8(spi.config.latency),
 		configOptions: C.uint32(spi.config.options),
 		Pin:           C.uint32(spi.config.pin),
-		reserved:      C.uint16(spi.config.reserved),
+		reserved:      C.uint16(0),
 	}
 
 	stat = Status(C.SPI_InitChannel(C.PVOID(spi.device.info.handle), &config))

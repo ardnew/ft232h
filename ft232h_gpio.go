@@ -23,7 +23,7 @@ func (gpio *GPIO) Init() error {
 
 func (gpio *GPIO) Write(dir uint8, val uint8) error {
 
-	val &= dir // only set output bits
+	val &= dir // set only the pins configured as OUTPUT
 
 	if err := _FT_WriteGPIO(gpio, dir, val); nil != err {
 		return err

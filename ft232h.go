@@ -2,6 +2,7 @@ package ft232h
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -138,11 +139,27 @@ func (m *FT232H) Close() error {
 	return nil
 }
 
+type Pin interface {
+	IsMPSSE() bool // true if DPin (port "D"), false if GPIO CPin (port "C")
+	Mask() uint8
+	Pos() uint8
+	String() string
+}
+
 // Types representing individual port pins.
 type (
-	DPin byte // pin on MPSSE low-byte lines (port "D" on FT232H)
-	CPin byte // pin on MPSSE high-byte lines (port "C" on FT232H)
+	DPin uint8 // pin on MPSSE low-byte lines (port "D" on FT232H)
+	CPin uint8 // pin on MPSSE high-byte lines (port "C" on FT232H)
 )
+
+func (p DPin) IsMPSSE() bool  { return true }
+func (p CPin) IsMPSSE() bool  { return false }
+func (p DPin) Mask() uint8    { return uint8(p) }
+func (p CPin) Mask() uint8    { return uint8(p) }
+func (p DPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
+func (p CPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
+func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
+func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
 
 // Constants related to GPIO pin configuration
 const (

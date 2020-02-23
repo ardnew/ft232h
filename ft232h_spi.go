@@ -9,20 +9,20 @@ type SPI struct {
 
 // spiConfig holds all of the configuration settings for an SPI channel.
 type spiConfig struct {
-	clockRate uint32 // in Hertz
-	latency   uint8  // in ms
-	options   spiOption
-	pin       uint32 // port D pins ("low byte lines of MPSSE")
-	reserved  uint16
+	clockRate  uint32 // in Hertz
+	latency    uint8  // in ms
+	options    spiOption
+	pin        uint32 // port D pins ("low byte lines of MPSSE")
+	chipSelect Pin
 }
 
 func spiConfigDefault() *spiConfig {
 	return &spiConfig{
-		clockRate: SPIClockDefault,
-		latency:   SPILatencyDefault,
-		options:   spiCSActiveDefault | spiCSDefault | spiModeDefault,
-		pin:       spiDPinConfigDefault(),
-		reserved:  0,
+		clockRate:  SPIClockDefault,
+		latency:    SPILatencyDefault,
+		options:    spiCSActiveDefault | spiCSDefault | spiModeDefault,
+		pin:        spiDPinConfigDefault(),
+		chipSelect: spiCSDefault.pin(),
 	}
 }
 
@@ -55,6 +55,23 @@ const (
 	spiCSActiveHigh    spiOption = 0x00000000 // drive pin high to assert CS
 	spiCSActiveDefault spiOption = spiCSActiveLow
 )
+
+func (opt spiOption) pin() DPin {
+	switch opt {
+	case spiCSD3:
+		return D3
+	case spiCSD4:
+		return D4
+	case spiCSD5:
+		return D5
+	case spiCSD6:
+		return D6
+	case spiCSD7:
+		return D7
+	default:
+		return spiCSDefault.pin()
+	}
+}
 
 // Constants related to board pins when MPSSE operating in SPI mode
 const (
@@ -127,27 +144,43 @@ const (
 	spiCSDeAssert spiXferOption = 0x00000004 // deassert CS after end
 )
 
-func (spi *SPI) ChangeCS(cs DPin) error {
+//func SPIWarningCSGPIO(pin Pin) error {
+//	return fmt.Errorf("SPI chip-select on GPIO pin %s", pin)
+//}
 
-	var csOpt spiOption
+func (spi *SPI) ChangeCS(cs Pin) error {
 
-	if csOpt, ok := spiCSPin[cs]; !ok || (spiCSInvalid == csOpt) {
-		return fmt.Errorf("invalid CS pin: %d", cs)
+	if (cs.IsMPSSE() == spi.config.chipSelect.IsMPSSE()) &&
+		(cs.Mask() == spi.config.chipSelect.Mask()) {
+		return nil // no change, provided pin is already CS
 	}
 
+	// clear current CS selection
 	spi.config.options &= ^(spiCSMask)
-	spi.config.options |= csOpt
 
-	// only invoke the driver if we have an active SPI channel. otherwise, these
-	// options get set on next Init().
-	if ModeSPI == spi.device.mode {
-		return _SPI_ChangeCS(spi)
+	if cs.IsMPSSE() {
+		var csOpt spiOption
+		if csOpt, ok := spiCSPin[cs.(DPin)]; !ok || (spiCSInvalid == csOpt) {
+			return fmt.Errorf("invalid CS pin: %d", cs)
+		}
+		spi.config.options |= csOpt
+		// only invoke the driver if we have an active SPI channel. otherwise, these
+		// options get set on next Init().
+		if ModeSPI == spi.device.mode {
+			if err := _SPI_ChangeCS(spi); nil != err {
+				return err
+			}
+		}
 	} else {
-		return nil
+		// no changes necessary for CS on GPIO pin
 	}
+
+	spi.config.chipSelect = cs // update only if we didnt return early on error
+
+	return nil
 }
 
-func (spi *SPI) SetOptions(cs DPin, activeLow bool, mode byte) error {
+func (spi *SPI) SetOptions(cs Pin, activeLow bool, mode byte) error {
 
 	var (
 		activeOpt spiOption
@@ -171,7 +204,7 @@ func (spi *SPI) SetOptions(cs DPin, activeLow bool, mode byte) error {
 	return spi.ChangeCS(cs)
 }
 
-func (spi *SPI) SetConfig(clock uint32, latency byte, cs DPin, activeLow bool, mode byte) error {
+func (spi *SPI) SetConfig(clock uint32, latency byte, cs Pin, activeLow bool, mode byte) error {
 
 	if 0 == clock {
 		spi.config.clockRate = SPIClockDefault
@@ -208,28 +241,38 @@ func (spi *SPI) Close() error {
 }
 
 func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
+
+	cs := spi.config.chipSelect
 	opt := spiXferBytes
+	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
+
 	if start {
-		opt |= spiCSAssert
+		if cs.IsMPSSE() {
+			opt |= spiCSAssert
+		} else {
+			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
+				return 0, err
+			}
+		}
 	}
+
 	if stop {
-		opt |= spiCSDeAssert
+		if cs.IsMPSSE() {
+			opt |= spiCSDeAssert
+		} else {
+			defer func() { _ = spi.device.GPIO.Set(cs.(CPin), !ass) }()
+		}
 	}
+
 	return _SPI_Write(spi, data, opt)
 }
 
-func (spi *SPI) WriteWith(cs CPin, data []uint8, start bool, stop bool) (uint32, error) {
+func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint32, error) {
 
-	assert := 0 == uint32(spiCSActiveLow&spi.config.options)
-
-	if start {
-		if err := spi.device.GPIO.Set(cs, assert); nil != err {
+	if start || stop {
+		if err := spi.ChangeCS(cs); nil != err {
 			return 0, err
 		}
 	}
-	if stop {
-		defer func() { _ = spi.device.GPIO.Set(cs, !assert) }()
-	}
-
-	return _SPI_Write(spi, data, spiXferBytes)
+	return spi.Write(data, start, stop)
 }

@@ -3,41 +3,49 @@ package main
 import (
 	"log"
 
-	se "github.com/ardnew/gompsse"
-)
-
-const (
-	TFTCS  = se.D3
-	TFTDC  = se.C0
-	TFTRST = se.C4
+	"github.com/ardnew/ft232h"
+	"github.com/ardnew/ft232h/drv/ili9341"
 )
 
 func main() {
 
+	var (
+		ft  *ft232h.FT232H
+		lcd *ili9341.ILI9341
+		err error
+	)
+
 	for _, desc := range []string{"FT232H-C"} {
-		m, err := se.NewMPSSEWithDesc(desc)
+
+		ft, err = ft232h.NewFT232HWithDesc(desc)
 		if nil != err {
-			log.Printf("NewMPSSEWithDesc(): %+v", err)
+			log.Printf("NewFT232HWithDesc(): %+v", err)
 			continue
 		}
-		defer m.Close()
+		defer ft.Close()
 
-		lcd, lerr := NewILI9341(m, TFTCS, TFTDC, TFTRST, down)
-		if lerr != nil {
-			log.Printf("NewILI9341(): %+v", lerr)
-			continue
-		}
-
-		if err := lcd.init(); nil != err {
-			log.Printf("init(): %+v", err)
-			continue
-		}
-
-		if err := lcd.fillScreen(0x100F); nil != err {
-			log.Printf("fillScreen(): %+v", err)
+		lcd, err = ili9341.InitILI9341(ft, &ili9341.Config{
+			PinCS:  ft232h.D3,
+			PinDC:  ft232h.C0,
+			PinRST: ft232h.C4,
+			Rotate: ili9341.RotDown,
+		})
+		if err != nil {
+			log.Printf("InitILI9341(): %+v", err)
 			continue
 		}
 
-		log.Printf("%s", m)
+		color := []ili9341.RGB{ili9341.Red, ili9341.Green, ili9341.Blue}
+		index := 0
+		for {
+			if err := lcd.FillScreen(color[index]); nil != err {
+				log.Printf("FillScreen(): %+v", err)
+				continue
+			}
+			index = (index + 1) % len(color)
+			//time.Sleep(100 * time.Millisecond)
+		}
+
+		log.Printf("%s", ft)
 	}
 }
