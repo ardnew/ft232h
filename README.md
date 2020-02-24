@@ -1,6 +1,8 @@
 # ft232h
 ##### Go module for the FT232H USB to SPI/I²C/UART Protocol Converter with GPIO
 
+_This is a work-in-progress and not at all stable_
+
 ## Features
 - [x] Go module compatible (see `go mod`)
 - [x] Designed for and tested with [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm)
@@ -12,6 +14,7 @@
   - Linux 32-bit (`386`) and 64-bit (`amd64`, `arm64`) - includes Raspberry Pi models 3 and 4
   - macOS (`amd64`)
   - Windows not currently supported
+- [x] **TBD** (WIP)
 
 ## Drivers
 All communication with MPSSE-capable devices (including FT232H) is performed with FTDI's open-source driver [`LibMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). This software however depends on FTDI's proprietary driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
@@ -28,5 +31,4 @@ Under [`native`](native), you will find the headers needed by the `ft232h` Go mo
 ```
 
 #### Building LibMPSSE (optional)
-TBD
-
+**TBD** (WIP)
