@@ -9,10 +9,12 @@ package ft232h
 // #include "stdlib.h"
 import "C"
 
-type Handle C.FT_HANDLE
-type Status C.FT_STATUS
-type Chip C.FT_DEVICE
-type Mode C.int
+type (
+	Handle C.FT_HANDLE
+	Status C.FT_STATUS
+	Chip   C.FT_DEVICE
+	Mode   C.int
+)
 
 // Constants related to device status
 const (
