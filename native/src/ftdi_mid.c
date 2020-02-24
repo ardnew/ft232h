@@ -594,9 +594,9 @@ FT_STATUS FT_Channel_Write(FT_LegacyProtocol Protocol, FT_HANDLE handle,
 	}
 #endif
 
-	status = varFunctionPtrLst.p_FT_Write(handle, buffer, noOfBytes, \
-		(DWORD*)noOfBytesTransferred);
+	status = varFunctionPtrLst.p_FT_Write(handle, buffer, noOfBytes, (DWORD*)noOfBytesTransferred);
 #if 0
+#define MID_MAX_USB_WRITE_BYTES 65536
 /* Disabled after code review */
 	DWORD numOfBytesToSend = 0;
 	DWORD numOfBytesSent = 0;
@@ -655,7 +655,7 @@ bool Mid_CheckMPSSEAvailable(FT_DEVICE_LIST_INFO_NODE devList)
 	switch(devList.Type)
 	{
 		case FT_DEVICE_2232C:
-			
+
 			if (devList.Description[los-1] == 0x41)   //Last character = 0x41 = ASCII "A"
 			{
 				isMPSSEAvailable =  MID_MPSSE_AVAILABLE;

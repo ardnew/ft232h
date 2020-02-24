@@ -59,9 +59,17 @@ type Point struct {
 	Y int
 }
 
+func MakePoint(x int, y int) Point {
+	return Point{X: x, Y: y}
+}
+
 type Size struct {
 	Width  int
 	Height int
+}
+
+func MakeSize(w int, h int) Size {
+	return Size{Width: w, Height: h}
 }
 
 type Frame struct {
@@ -105,10 +113,11 @@ func (f *Frame) rowAddress() []uint8 {
 type Rotation byte
 
 const (
+	// rotation indicates position of board pins when looking at the screen
 	RotDown    Rotation = 0
-	RotRight   Rotation = 1
+	RotLeft    Rotation = 1
 	RotUp      Rotation = 2
-	RotLeft    Rotation = 3
+	RotRight   Rotation = 3
 	RotDefault Rotation = RotDown
 )
 
@@ -116,11 +125,11 @@ func (r Rotation) MADCTL() byte {
 	switch r {
 	case RotDown:
 		return 0x40 | 0x08
-	case RotRight:
+	case RotLeft:
 		return 0x40 | 0x80 | 0x20 | 0x08
 	case RotUp:
 		return 0x80 | 0x08
-	case RotLeft:
+	case RotRight:
 		return 0x20 | 0x08
 	default:
 		return RotDefault.MADCTL()
@@ -137,11 +146,11 @@ func (r Rotation) Size() Size {
 	switch r {
 	case RotDown:
 		return Size{Width: numHorzPixels, Height: numVertPixels}
-	case RotRight:
+	case RotLeft:
 		return Size{Width: numVertPixels, Height: numHorzPixels}
 	case RotUp:
 		return Size{Width: numHorzPixels, Height: numVertPixels}
-	case RotLeft:
+	case RotRight:
 		return Size{Width: numVertPixels, Height: numHorzPixels}
 	default:
 		return RotDefault.Size()
@@ -214,7 +223,7 @@ func (c RGB16) Buffer(n uint) []uint8 {
 	buff := make([]uint8, 2*n)
 	msb := c.MSB()
 	lsb := c.LSB()
-	for i := uint(0); i < n; i += 2 {
+	for i := uint(0); i < 2*n; i += 2 {
 		buff[i] = msb
 		buff[i+1] = lsb
 	}
@@ -225,16 +234,53 @@ func (c RGB) Buffer(n uint) []uint8 {
 	return c.Pack().Buffer(n)
 }
 
-func (lcd *ILI9341) Reset() error {
-	// hardware reset
+type RGBWheel uint8
+
+func (w *RGBWheel) Next() RGB {
+
+	p := uint8(*w)
+	*w++
+
+	p = 0xFF - p
+	if p < 0x55 {
+		return RGB{int16(p * 0x03), int16(0xFF - p*0x03), int16(0x00)}
+	} else if p < 0xAA {
+		p -= 0x55
+		return RGB{int16(0xFF - p*0x03), int16(0x00), int16(p * 0x03)}
+	} else {
+		p -= 0xAA
+		return RGB{int16(0x00), int16(p * 0x03), int16(0xFF - p*0x03)}
+	}
+}
+
+func (lcd *ILI9341) setPinRST(set bool) error {
 	if 0 == lcd.config.PinRST.Mask() {
 		return fmt.Errorf("reset pin undefined")
 	}
-	if err := lcd.device.GPIO.Set(lcd.config.PinRST, false); nil != err {
+	if err := lcd.device.GPIO.Set(lcd.config.PinRST, set); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) setPinDC(set bool) error {
+	if 0 == lcd.config.PinDC.Mask() {
+		return fmt.Errorf("data/command pin undefined")
+	}
+	// clear DC line to indicate command on MOSI, set DC to indicate data
+	if err := lcd.device.GPIO.Set(lcd.config.PinDC, set); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) Reset() error {
+	// hardware reset
+	if err := lcd.setPinRST(false); nil != err {
 		return err
 	}
 	time.Sleep(200 * time.Millisecond)
-	if err := lcd.device.GPIO.Set(lcd.config.PinRST, true); nil != err {
+	if err := lcd.setPinRST(true); nil != err {
 		return err
 	}
 	return nil
@@ -242,7 +288,7 @@ func (lcd *ILI9341) Reset() error {
 
 func (lcd *ILI9341) SendCommand(cmd uint8) error {
 	// clear DC line to indicate command on MOSI
-	if err := lcd.device.GPIO.Set(lcd.config.PinDC, false); nil != err {
+	if err := lcd.setPinDC(false); nil != err {
 		return err
 	}
 	// write command using auto CS-assertion
@@ -253,15 +299,27 @@ func (lcd *ILI9341) SendCommand(cmd uint8) error {
 }
 
 func (lcd *ILI9341) SendData(data []uint8) error {
-	// set DC line to indicate data on MOSI
-	if err := lcd.device.GPIO.Set(lcd.config.PinDC, true); nil != err {
+	// write data using CS auto-assertion.
+	if err := lcd.WriteData(data, true, true); nil != err {
 		return err
 	}
-	// write data using auto CS-assertion. note that you have the PC's resources
-	// at your disposal, so you can easily send an entire ILI9341 framebuffer at
-	// once here (240*320 16-bit px = 153600 bytes), the FT232H will efficiently
-	// assert CS and transmit the data.
-	if _, err := lcd.device.SPI.Write(data, true, true); nil != err {
+	return nil
+}
+
+func (lcd *ILI9341) WriteData(data []uint8, start bool, stop bool) error {
+	// only assert DC line if we are starting a transfer
+	if start {
+		// set DC line to indicate data on MOSI
+		if err := lcd.setPinDC(true); nil != err {
+			return err
+		}
+	}
+
+	// write data using optional CS auto-assertion. if the start flag is not true,
+	// the CS line will not be asserted before starting transfer, and if stop flag
+	// is not true, the line will not be de-asserted after transfer. this is used
+	// in case your writes need to be broken up across multiple calls.
+	if _, err := lcd.device.SPI.Write(data, start, stop); nil != err {
 		return err
 	}
 	return nil
@@ -366,15 +424,15 @@ func (lcd *ILI9341) Clip(p Point) Point {
 	if p.X < 0 {
 		p.X = 0
 	} else {
-		if p.X >= s.Width {
-			p.X = s.Width - 1
+		if p.X > s.Width {
+			p.X = s.Width
 		}
 	}
 	if p.Y < 0 {
 		p.Y = 0
 	} else {
-		if p.Y >= s.Height {
-			p.Y = s.Height - 1
+		if p.Y > s.Height {
+			p.Y = s.Height
 		}
 	}
 	return p
@@ -385,12 +443,29 @@ func (lcd *ILI9341) Normalize(f Frame) Frame {
 	// if size is negative in either dimension, adjust the origin to exist on the
 	// lesser axis, and flip the sign of the size dimension
 	if f.Size.Width < 0 {
-		f.Origin.X -= f.Size.Width
+		f.Origin.X += f.Size.Width
 		f.Size.Width = -f.Size.Width
 	}
 	if f.Size.Height < 0 {
-		f.Origin.Y -= f.Size.Height
+		f.Origin.Y += f.Size.Height
 		f.Size.Height = -f.Size.Height
+	}
+
+	// ---------------------------------------------------------------------------
+	// if origin is less than screen bounds, it will be clipped. adjust the size
+	// by the amount being clipped so that the greater axis stays in place. if
+	// origin is greater than screen bounds, then our resulting frame will have
+	// zero units in that dimension after clipping, so it doesn't matter. this is
+	// all because we can guarantee size is a positive value, >0 per above.
+	// ---------------------------------------------------------------------------
+
+	// this will temporarily malform our rectangle, but is necessary. the result
+	// after clipping below will yield the correct region.
+	if f.Origin.X < 0 {
+		f.Size.Width += f.Origin.X
+	}
+	if f.Origin.Y < 0 {
+		f.Size.Height += f.Origin.Y
 	}
 
 	// now make sure both points exist in the visible screen area
@@ -401,15 +476,11 @@ func (lcd *ILI9341) Normalize(f Frame) Frame {
 	})
 
 	// reconstruct the resultive visible frame
-	return Frame{
-		Origin: p1,
-		Size: Size{
-			Width:  p2.X - p1.X,
-			Height: p2.Y - p1.Y,
-		}}
+	return MakeFrameRect(p1.X, p1.Y, p2.X, p2.Y)
 }
 
 func (lcd *ILI9341) FillScreen(color RGB) error {
+
 	sz := lcd.config.Rotate.Size()
 	if err := lcd.SetFrame(MakeFrame(0, 0, sz.Width, sz.Height)); nil != err {
 		return err
@@ -418,4 +489,115 @@ func (lcd *ILI9341) FillScreen(color RGB) error {
 		return err
 	}
 	return nil
+}
+
+func (lcd *ILI9341) FillFrame(color RGB, frame Frame) error {
+
+	fr := lcd.Normalize(frame)
+	if 0 == fr.Size.Width || 0 == fr.Size.Height {
+		return nil
+	}
+	if err := lcd.SetFrame(fr); nil != err {
+		return err
+	}
+	px := fr.Size.Width * fr.Size.Height
+	if err := lcd.SendData(color.Buffer(uint(px))); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) FillFrameRect(color RGB, x int, y int, w int, h int) error {
+	return lcd.FillFrame(color, MakeFrame(x, y, w, h))
+}
+
+func (lcd *ILI9341) DrawPixel(color RGB, x int, y int) error {
+
+	pt := lcd.Clip(MakePoint(x, y))
+	if err := lcd.SetFrame(MakeFrame(pt.X, pt.Y, 1, 1)); nil != err {
+		return err
+	}
+	if err := lcd.SendData(color.Buffer(1)); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) DrawBitmap1BPP(fg RGB, bg RGB, frame Frame, bmp []uint8) error {
+
+	fr := lcd.Normalize(frame)
+	if 0 == fr.Size.Width || 0 == fr.Size.Height {
+		return nil
+	}
+
+	w, h := fr.Size.Width, fr.Size.Height
+
+	fm, fl, bm, bl :=
+		fg.MSB(), fg.LSB(), bg.MSB(), bg.LSB()
+
+	wordWidth, bit := (w+7)/8, uint8(0)
+	data, n := make([]uint8, 2*w*h), 0
+
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			if (i & 7) > 0 {
+				bit <<= 1
+			} else {
+				bit = bmp[j*wordWidth+i/8]
+			}
+			if (bit & 0x80) > 0 {
+				data[n] = fm
+				data[n+1] = fl
+			} else {
+				data[n] = bm
+				data[n+1] = bl
+			}
+			n += 2
+		}
+	}
+	if err := lcd.SetFrame(fr); nil != err {
+		return err
+	}
+	if err := lcd.SendData(data); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) DrawBitmapRect1BPP(fg RGB, bg RGB, x int, y int, w int, h int, bmp []uint8) error {
+	return lcd.DrawBitmap1BPP(fg, bg, MakeFrame(x, y, w, h), bmp)
+}
+
+func (lcd *ILI9341) DrawBitmap16BPP(frame Frame, bmp []uint16) error {
+
+	fr := lcd.Normalize(frame)
+	if 0 == fr.Size.Width || 0 == fr.Size.Height {
+		return nil
+	}
+
+	w, h := fr.Size.Width, fr.Size.Height
+
+	numPx := w * h
+	if numPx > len(bmp) {
+		return fmt.Errorf("not enough data to fill drawing area")
+	}
+
+	// re-order color data, MSB-first
+	data := make([]uint8, 2*numPx)
+	for i, rgb := range bmp[:numPx] {
+		data[2*i] = uint8(rgb>>8) & 0xFF
+		data[2*i+1] = uint8(rgb>>0) & 0xFF
+	}
+
+	if err := lcd.SetFrame(fr); nil != err {
+		return err
+	}
+	if err := lcd.SendData(data); nil != err {
+		return err
+	}
+	return nil
+}
+
+func (lcd *ILI9341) DrawBitmapRect16BPP(x int, y int, w int, h int, bmp []uint16) error {
+	return lcd.DrawBitmap16BPP(MakeFrame(x, y, w, h), bmp)
 }

@@ -276,11 +276,28 @@ func _SPI_ChangeCS(spi *SPI) error {
 }
 
 func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint32, error) {
-	var sent C.uint32
-	stat := Status(C.SPI_Write(C.PVOID(spi.device.info.handle),
-		(*C.uint8)(&data[0]), C.uint32(len(data)), &sent, C.uint32(opt)))
-	if !stat.OK() {
-		return uint32(sent), stat
+
+	// note that MPSSE has a limitation on the size of SPI transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var (
+		total uint32
+		sent  C.uint32
+	)
+
+	dataLen := len(data)
+	for beg := 0; beg < dataLen; beg += MaxTransferBytes {
+		end := beg + MaxTransferBytes
+		if end > dataLen {
+			end = dataLen
+		}
+		stat := Status(C.SPI_Write(C.PVOID(spi.device.info.handle),
+			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
+		total += uint32(sent)
+		if !stat.OK() {
+			return total, stat
+		}
 	}
-	return uint32(sent), nil
+	return total, nil
 }
