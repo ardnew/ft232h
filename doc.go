@@ -26,7 +26,12 @@
 // The following are links to documentation referenced above or are otherwise
 // useful for FTDI USB device programming:
 //
+//                 Datasheet: https://github.com/ardnew/ft232h/blob/master/doc/FT232H-datasheet.pdf
+//         FTD2XX User Guide: https://github.com/ardnew/ft232h/blob/master/doc/FTD2XX-user-guide.pdf
+//   LibMPSSE I²C User Guide: https://github.com/ardnew/ft232h/blob/master/doc/LibMPSSE-I2C-user-guide.pdf
+//   LibMPSSE SPI User Guide: https://github.com/ardnew/ft232h/blob/master/doc/LibMPSSE-SPI-user-guide.pdf
 //
-//   datasheet: https://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf
+//       FTD2XX Product Page: https://www.ftdichip.com/Drivers/D2XX.htm
+//     LibMPSEE Product Page: https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm
 //
 package ft232h
