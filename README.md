@@ -31,12 +31,10 @@ No other files or configuration to your build process are necessary.
 
 #### Linux
 Many Linux distributions ship with the FTDI Virtual COM Port (VCP) driver pre-installed (as a kernel module, usually `ftdi_sio`). However, [according to FTDI](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf):
-"""
 > For Linux, Mac OS X (10.4 and later) and Windows CE (4.2 
 > and later) the D2XX driver and VCP driver are mutually 
 > exclusive options as only one driver type may be installed 
 > at a given time for a given device ID.
-"""
 
 There are [a lot of ways](https://www.google.com/search?q=d2xx+ftdi_sio) to resolve the issue, including [fancy udev rules to swap out modules when (un)plugging devices](https://stackoverflow.com/a/43514662/1054397), but I don't personally use the VCP driver. 
 
