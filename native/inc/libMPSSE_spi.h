@@ -24,6 +24,7 @@
  * 0.2  - 20110708 - added FT_ReadGPIO, FT_WriteGPIO & SPI_ChangeCS
  * 0.3  - 20111025 - modified for supporting 64bit linux
  * 0.41 - 20140903 - modified for compilation issues with either C application/C++ application
+ * 0.6  - 20202402 - add support for static linking
  */
 
 #ifndef LIBMPSSE_SPI_H

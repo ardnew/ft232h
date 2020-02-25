@@ -1,8 +1,12 @@
 package ft232h
 
 // #cgo darwin,amd64 LDFLAGS: -framework CoreFoundation -framework IOKit
+// #cgo darwin,amd64 LDFLAGS: -L${SRCDIR}/native/lib/darwin-amd64
+// #cgo linux,amd64  LDFLAGS: -L${SRCDIR}/native/lib/linux-amd64
+// #cgo linux,arm64  LDFLAGS: -L${SRCDIR}/native/lib/linux-arm64
+// #cgo linux,386    LDFLAGS: -L${SRCDIR}/native/lib/linux-386
 // #cgo  CFLAGS: -I${SRCDIR}/native/inc
-// #cgo LDFLAGS: -lMPSSE -lftd2xx -ldl
+// #cgo LDFLAGS: -lMPSSE
 // #include "libMPSSE_spi.h"
 // #include "libMPSSE_i2c.h"
 // #include "ftd2xx.h"

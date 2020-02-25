@@ -17,14 +17,18 @@ _This is a work-in-progress and not at all stable_
 - [x] **TBD** (WIP)
 
 ## Drivers
-All communication with MPSSE-capable devices (including FT232H) is performed with FTDI's open-source driver [`LibMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). This software however depends on FTDI's proprietary driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
+All communication with MPSSE-capable devices (including FT232H) is performed with FTDI's open-source driver [`LibMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). That software however depends on FTDI's proprietary driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
 
-Contained in this project are all of the necessary C source files required to build `LibMPSSE`, as well as the required `FTD2XX` library (binary-only), both which are included as pre-compiled libraries for each supported OS. A simple GNU Makefile (shared among all supported OS) has also been created to simplify building and installing these libraries (see: [Building LibMPSSE](#building-libmpsse-optional)). Changes to both `FTD2XX` and `LibMPSSE` were made for general compatibility reasons and should not affect the API.
+Contained in this project are all of the necessary C source files required to build `LibMPSSE`, as well as the required `FTD2XX` library (binary-only), with modifications to support being built as a single statically-linked library. A simple GNU Makefile (shared among all supported OS) has also been created to simplify building (see: [Building LibMPSSE](#building-libmpsse-optional)). The result is a single library file `libMPSSE.a` containing _all_ of the necessary FTDI driver dependencies with which the `ft232h` Go module can be linked.
 
-Under [`native`](native), you will find the headers needed by the `ft232h` Go module to communicate with the C libraries (using [`cgo`](https://golang.org/cmd/cgo/)), the source code for `LibMPSSE`, and the pre-compiled `FTD2XX` libraries separated for each supported platform:
+A pre-compiled `libMPSSE.a` library is already included with this package for each supported OS, so no special configuration or installation is required.
+
+Under [`native`](native), you will find the headers needed by the `ft232h` Go module to communicate with the C library (using [`cgo`](https://golang.org/cmd/cgo/)), the source code for `LibMPSSE`, the pre-compiled `FTD2XX` libraries, and the pre-compiled `libMPSSE.a` libraries separated for each supported platform:
 
 ```sh
 └── native/
+    ├── lib/  # Pre-compiled libMPSSE.a library needed by Go software using this ft232h module
+    │   └── `${GOOS}_${GOARCH}`/ # separated by platform for cgo library path resolution
     ├── inc/  # LibMPSSE C APIs and FTD2XX C source code headers needed by cgo
     └── src/  # LibMPSSE C source code, GNU Makefile
         └── `${GOOS}_${GOARCH}`/ # build outputs and proprietary FTD2XX library

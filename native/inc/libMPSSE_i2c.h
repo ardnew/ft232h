@@ -25,6 +25,7 @@
  * 0.3 - 20111025 - modified for supporting 64bit linux
  *				    added I2C_TRANSFER_OPTIONS_NACK_LAST_BYTE
  * 0.5 - 20140912 - modified for compilation issues with either C application/C++ application
+ * 0.6 - 20202402 - add support for static linking
  */
 
 #ifndef LIBMPSSE_I2C_H

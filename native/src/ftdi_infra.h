@@ -27,6 +27,7 @@
  * 0.2  - 20110708 - added memory related macros
  * 0.3  - 20111103 - added 64bit linux support, cleaned up
  * 0.41 - 20140903 - fixed compile warnings
+ * 0.6  - 20202402 - add support for static linking
  *
  */
 
@@ -42,7 +43,9 @@
 #endif
 
 #if defined(__linux) || defined(__APPLE__)
+#ifndef FTD2XX_STATIC
 #include<dlfcn.h>	/*for dlopen() & dlsym()*/
+#endif // FTD2XX_STATIC
 #include<stdarg.h>	/*for va_start() & va_arg()*/
 #include<unistd.h>	/*for Sleep()*/
 #endif
@@ -54,6 +57,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<stdbool.h>
 #include"ftd2xx.h"
 
 
@@ -262,6 +266,7 @@ typedef struct InfraFunctionPtrLst_t
 /******************************************************************************/
 /*								External variables							  */
 /******************************************************************************/
+#ifndef FTD2XX_STATIC
 #ifdef _WIN32
 	extern HANDLE hdll_d2xx;
 #endif
@@ -269,6 +274,7 @@ typedef struct InfraFunctionPtrLst_t
 #if defined(__linux__) || defined(__APPLE__)
 	extern void *hdll_d2xx;
 #endif
+#endif // FTD2XX_STATIC
 
 extern InfraFunctionPtrLst varFunctionPtrLst;
 

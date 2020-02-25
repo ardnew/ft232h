@@ -23,7 +23,8 @@
  * 0.1  - initial version
  * 0.2  - 20110708 - exported Init_libMPSSE & Cleanup_libMPSSE for Microsoft toolchain support
  * 0.3  - 20111103 - commented & cleaned up
- * 0.41 - 20140903 - fixed compile warnings 
+ * 0.41 - 20140903 - fixed compile warnings
+ * 0.6  - 20202402 - add support for static linking
  */
 
 
@@ -38,6 +39,7 @@
 /******************************************************************************/
 
 
+#ifndef FTD2XX_STATIC
 #if defined(__linux) || defined(__APPLE__)
 	#define GET_FUNC(libHandle,symbol)	dlsym(libHandle,symbol)
 	/* Macro to check if dlsym returned a correctly */
@@ -47,7 +49,7 @@
 	#define GET_FUNC(libHandle,symbol) GetProcAddress(libHandle,symbol)
 	#define CHECK_SYMBOL(exp) CHECK_NULL(exp);
 #endif
-
+#endif // FTD2XX_STATIC
 
 
 /******************************************************************************/
@@ -59,6 +61,7 @@
 #endif
 
 /* Handle to D2XX driver */
+#ifndef FTD2XX_STATIC
 #ifdef _WIN32
 	HANDLE hdll_d2xx;
 #endif
@@ -66,7 +69,7 @@
 #if defined(__linux__) || defined(__APPLE__)
 	void *hdll_d2xx;
 #endif
-
+#endif
 InfraFunctionPtrLst varFunctionPtrLst;
 
 
@@ -252,6 +255,8 @@ FTDI_API void Init_libMPSSE(void)
 	//FT_STATUS status;
 	FN_ENTER;
 
+#ifndef FTD2XX_STATIC
+
 /* Load D2XX dynamic library */
 #if defined(__APPLE__)
 	hdll_d2xx = dlopen("libftd2xx.dylib",RTLD_NOW);
@@ -313,6 +318,27 @@ FTDI_API void Init_libMPSSE(void)
 	varFunctionPtrLst.p_FT_GetDeviceInfo = (pfunc_FT_GetDeviceInfo)GET_FUNC(hdll_d2xx,"FT_GetDeviceInfo");
 	CHECK_SYMBOL(varFunctionPtrLst.p_FT_GetDeviceInfo);
 
+#else
+
+  varFunctionPtrLst.p_FT_GetLibraryVersion = (pfunc_FT_GetLibraryVersion)FT_GetLibraryVersion;
+  varFunctionPtrLst.p_FT_GetNumChannel     = (pfunc_FT_GetNumChannel)FT_CreateDeviceInfoList;
+  varFunctionPtrLst.p_FT_GetDeviceInfoList = (pfunc_FT_GetDeviceInfoList)FT_GetDeviceInfoList;
+  varFunctionPtrLst.p_FT_Open              = (pfunc_FT_Open)FT_Open;
+  varFunctionPtrLst.p_FT_Close             = (pfunc_FT_Close)FT_Close;
+  varFunctionPtrLst.p_FT_ResetDevice       = (pfunc_FT_ResetDevice)FT_ResetDevice;
+  varFunctionPtrLst.p_FT_Purge             = (pfunc_FT_Purge)FT_Purge;
+  varFunctionPtrLst.p_FT_SetUSBParameters  = (pfunc_FT_SetUSBParameters)FT_SetUSBParameters;
+  varFunctionPtrLst.p_FT_SetChars          = (pfunc_FT_SetChars)FT_SetChars;
+  varFunctionPtrLst.p_FT_SetTimeouts       = (pfunc_FT_SetTimeouts)FT_SetTimeouts;
+  varFunctionPtrLst.p_FT_SetLatencyTimer   = (pfunc_FT_SetLatencyTimer)FT_SetLatencyTimer;
+  varFunctionPtrLst.p_FT_SetBitmode        = (pfunc_FT_SetBitmode)FT_SetBitMode;
+  varFunctionPtrLst.p_FT_GetQueueStatus    = (pfunc_FT_GetQueueStatus)FT_GetQueueStatus;
+  varFunctionPtrLst.p_FT_Read              = (pfunc_FT_Read)FT_Read;
+  varFunctionPtrLst.p_FT_Write             = (pfunc_FT_Write)FT_Write;
+  varFunctionPtrLst.p_FT_GetDeviceInfo     = (pfunc_FT_GetDeviceInfo)FT_GetDeviceInfo;
+
+#endif // FTD2XX_STATIC
+
 	/*Call module specific initialization functions from here(if at all they are required)
 		Example:
 			Top_Init();	//This may be a function in ftdi_common.c
@@ -340,6 +366,9 @@ FTDI_API void Cleanup_libMPSSE(void)
 {
 	//FT_STATUS status=FT_OK;
 	FN_ENTER;
+
+#ifndef FTD2XX_STATIC
+
 #ifdef _WIN32
 	if(NULL != hdll_d2xx)
 	{
@@ -361,6 +390,8 @@ FTDI_API void Cleanup_libMPSSE(void)
 #if defined(__linux) || defined(__APPLE__)
     dlclose(hdll_d2xx);
 #endif
+
+#endif // FTD2XX_STATIC
 
 	FN_EXIT;
 }
