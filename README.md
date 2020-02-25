@@ -6,7 +6,7 @@ _This is a work-in-progress and not at all stable_
 ## Features
 - [x] Go **module** compatible with `go get` (see: [Installation](#installation))
   - No installation or configuration required
-- [x] **No** dynamic library dependencies (`libMPSSE`, `FTD2XX`, etc.)
+- [x] **No dynamic library dependencies** (`libMPSSE`, `FTD2XX`, etc.)
   - Go applications using the module need no additional libraries to be packaged or deployed with the compiled executable
   - Native drivers are statically linked with Go module, transparent to the consuming application
 - [x] Support for multiple host OS (see: [Drivers](#drivers))
@@ -14,6 +14,41 @@ _This is a work-in-progress and not at all stable_
   - macOS (`amd64`)
   - Windows not currently supported
 - [x] **TBD** (WIP)
+
+## Installation
+Installing the module can be done with the Go built-in package manager. If you are not [using Go modules](https://blog.golang.org/using-go-modules) for your application (or are unsure), use the following:
+```sh
+go get -u -v github.com/ardnew/ft232h
+```
+Otherwise, you are using Go modules, either use the same command above (sans `-u`), or simply add the import statement to your source code and the module will be installed automatically:
+```go
+import (
+    // ... other imports ...
+    "github.com/ardnew/ft232h"
+)
+```
+No other files or configuration to your build process are necessary.
+
+#### Linux
+Many Linux distributions ship with the FTDI Virtual COM Port (VCP) driver pre-installed (as a kernel module, usually `ftdi_sio`). However, [according to FTDI](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf):
+"""
+> For Linux, Mac OS X (10.4 and later) and Windows CE (4.2 
+> and later) the D2XX driver and VCP driver are mutually 
+> exclusive options as only one driver type may be installed 
+> at a given time for a given device ID.
+"""
+
+There are [a lot of ways](https://www.google.com/search?q=d2xx+ftdi_sio) to resolve the issue, including [fancy udev rules to swap out modules when (un)plugging devices](https://stackoverflow.com/a/43514662/1054397), but I don't personally use the VCP driver. 
+
+On Ubuntu, you can simply prevent the VCP module from being auto-loaded at bootup by blacklisting the module. For example, create a new file `/etc/modprobe.d/blacklist-ftdi.conf` with a single directive:
+```sh
+# the official FTDI driver FTD2XX is incompatible with the VCP driver,
+# preventing communication with FT232H breakouts
+blacklist ftdi_sio
+```
+
+#### macOS
+Despite FTDI's [own quote from the `D2XX Programmer's Guide`]((http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf)) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
 ## Drivers
 All communication with MPSSE-capable devices (including FT232H) is performed internally using FTDI's open-source driver [`libMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). That software however depends on FTDI's proprietary, binary-only driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
