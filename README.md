@@ -50,7 +50,7 @@ sudo rmmod ftdi_sio
 ```
 
 #### macOS
-Despite FTDI's [own quote from the `D2XX Programmer's Guide`]((http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf)) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
+Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
 ## Drivers
 All communication with MPSSE-capable devices (including FT232H) is performed internally using FTDI's open-source driver [`libMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). That software however depends on FTDI's proprietary, binary-only driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
