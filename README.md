@@ -6,10 +6,10 @@ _This is a work-in-progress and not at all stable_
 ## Features
 - [x] Go **module** compatible with `go get` (see: [Installation](#installation))
   - No installation or configuration required
-- [x] **No dynamic library dependencies** (`libMPSSE`, `FTD2XX`, etc.)
+- [x] **No dynamic library dependencies** (see: [Drivers](#drivers))
   - Go applications using the module need no additional libraries to be packaged or deployed with the compiled executable
   - Native drivers are statically linked with Go module, transparent to the consuming application
-- [x] Support for multiple host OS (see: [Drivers](#drivers))
+- [x] Support for multiple host OS
   - Linux 32-bit (`386`) and 64-bit (`amd64`, `arm64`) - includes Raspberry Pi models 3 and 4
   - macOS (`amd64`)
   - Windows not currently supported
