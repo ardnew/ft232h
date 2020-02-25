@@ -23,8 +23,8 @@ go get -u -v github.com/ardnew/ft232h
 Otherwise, you are using Go modules, either use the same command above (sans `-u`), or simply add the import statement to your source code and the module will be installed automatically:
 ```go
 import (
-    // ... other imports ...
-    "github.com/ardnew/ft232h"
+	// ... other imports ...
+	"github.com/ardnew/ft232h"
 )
 ```
 No other files or configuration to your build process are necessary.
