@@ -38,7 +38,7 @@ All of the C software related to the native drivers `libft232h`, `libMPSSE`, and
 #### Building `libft232h` (optional)
 The static library `libft232h.a` can be rebuilt if necessary to support other platforms or if any changes to `libMPSSE` or `FTD2XX` are required.
 
-A [GNU Makefile](native/src/Makefile) was created to simplify the build and installation process. It performs the following tasks:
+Building the native drivers is done with a [GNU Makefile](native/src/Makefile). It performs the following tasks:
 1. Compiles the `libMPSSE` C source code into object files (.o)
 2. Extracts the object files from the proprietary `FTD2XX` static library
 3. Archives all of the `libMPSSE` and `FTD2XX` object files into a single static library `libft232h.a`
