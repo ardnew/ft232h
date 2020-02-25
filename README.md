@@ -44,6 +44,10 @@ On Ubuntu, you can simply prevent the VCP module from being auto-loaded at bootu
 # preventing communication with FT232H breakouts
 blacklist ftdi_sio
 ```
+Be sure to unload the module if it was already loaded:
+```sh
+sudo rmmod ftdi_sio
+```
 
 #### macOS
 Despite FTDI's [own quote from the `D2XX Programmer's Guide`]((http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf)) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
