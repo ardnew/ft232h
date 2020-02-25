@@ -342,13 +342,13 @@ FTDI_API FT_STATUS SPI_CloseChannel(FT_HANDLE handle)
 FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer,
 	uint32 sizeToTransfer, uint32 *sizeTransferred, uint32 transferOptions)
 {
-	FT_STATUS status;
+	FT_STATUS status = FT_OTHER_ERROR;
 	//uint32 i;
 	uint8 byte = 0;
 	uint8 bitsToTransfer=0;
 	uint8 lsb = 0;
 
-	
+
 	FN_ENTER;
 #ifdef ENABLE_PARAMETER_CHECKING
 	CHECK_NULL_RET(handle);
@@ -361,7 +361,7 @@ FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer,
 	{
 		lsb = MPSSE_CMD_DATA_LSB_FIRST;
 	}
-	
+
 	if(transferOptions & SPI_TRANSFER_OPTIONS_CHIPSELECT_ENABLE)
 	{
 		/* Enable CHIPSELECT line for the channel */
@@ -418,7 +418,7 @@ FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer,
 		*sizeTransferred=0;
 		while(*sizeTransferred<sizeToTransfer)
 		{
-		
+
 			CurrentXferSize = ((sizeToTransfer - *sizeTransferred) > 64*1024)? 64*1024:(sizeToTransfer - *sizeTransferred);
 		/* length LSB */
 			cmdBuffer[1] = (uint8)((CurrentXferSize-1) & 0x000000FF) ;
@@ -437,7 +437,7 @@ FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer,
 
 			*sizeTransferred += noOfBytesTransferred;
 		}
-		
+
 		DBG(MSG_DEBUG,"sizeToTransfer=%u sizeTransferred=%u cmdBuffer[0]=0x%x  \
 			cmdBuffer[1]=0x%x cmdBuffer[2]=0x%x buffer[0]=0x%x buffer[1]=0x%x\n"
 			,sizeToTransfer,sizeTransferred,cmdBuffer[0],cmdBuffer[1],
@@ -562,7 +562,7 @@ FTDI_API FT_STATUS SPI_Write(FT_HANDLE handle, uint8 *buffer,
 		}
 
 		*sizeTransferred = 0;
-		
+
 		while(*sizeTransferred < sizeToTransfer)
 		{
 
@@ -579,9 +579,9 @@ FTDI_API FT_STATUS SPI_Write(FT_HANDLE handle, uint8 *buffer,
 			status = FT_Channel_Write(SPI,handle,CurrentXferSize,buffer,\
 				&noOfBytesTransferred);
 			*sizeTransferred += noOfBytesTransferred;
-			
+
 		CHECK_STATUS(status);
-			
+
 		}
 	}
 
@@ -740,7 +740,7 @@ FTDI_API FT_STATUS SPI_ReadWrite(FT_HANDLE handle, uint8 *inBuffer,
 		*sizeTransferred=0;
 		while(*sizeTransferred<sizeToTransfer)
 		{
-		
+
 			CurrentXferSize = ((sizeToTransfer - *sizeTransferred) > 64*1024)? 64*1024:(sizeToTransfer - *sizeTransferred);
 			/* length LSB */
 			cmdBuffer[1] = (uint8)((CurrentXferSize-1) & 0x000000FF) ;
@@ -768,7 +768,7 @@ FTDI_API FT_STATUS SPI_ReadWrite(FT_HANDLE handle, uint8 *inBuffer,
 		}
 		#endif
 
-			noOfBytesTransferred = 0;		
+			noOfBytesTransferred = 0;
 			status = FT_Channel_Read(SPI,handle,CurrentXferSize,&inBuffer[*sizeTransferred],
 				&noOfBytesTransferred);
 		CHECK_STATUS(status);
@@ -1037,7 +1037,7 @@ FT_STATUS SPI_DelChannelConfig(FT_HANDLE handle)
 			{/*Node found*/
 				if(tempNode == ListHead)
 				{/* Is the first node */
-					
+
 					ListHead = tempNode->next;
 					INFRA_FREE(tempNode);
 				}

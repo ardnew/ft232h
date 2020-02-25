@@ -125,7 +125,7 @@ typedef struct ChannelConfig_t
 	NOTE: This feature is probably a per chip feature and not per device*/
 
 	uint8			LatencyTimer; /*Required value, in milliseconds, of latency timer.
-	Valid range is 2 – 255
+	Valid range is 2 - 255
 	In the FT8U232AM and FT8U245AM devices, the receive buffer timeout that is used to flush
 	remaining data from the receive buffer was fixed at 16 ms. In all other FTDI devices, this
 	timeout is programmable and can be set at 1 ms intervals between 2ms and 255 ms.  This

@@ -6,7 +6,7 @@ package ft232h
 // #cgo linux,arm64  LDFLAGS: -L${SRCDIR}/native/lib/linux-arm64
 // #cgo linux,386    LDFLAGS: -L${SRCDIR}/native/lib/linux-386
 // #cgo  CFLAGS: -I${SRCDIR}/native/inc
-// #cgo LDFLAGS: -lMPSSE
+// #cgo LDFLAGS: -lft232h
 // #include "libMPSSE_spi.h"
 // #include "libMPSSE_i2c.h"
 // #include "ftd2xx.h"

@@ -86,7 +86,7 @@ typedef signed char   int8;
 typedef signed short  int16;
 typedef signed long long int64;
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(__bool_true_false_are_defined)
 typedef unsigned char	bool;
 #endif
 

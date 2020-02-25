@@ -42,7 +42,7 @@
 #include<windows.h>
 #endif
 
-#if defined(__linux) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__)
 #ifndef FTD2XX_STATIC
 #include<dlfcn.h>	/*for dlopen() & dlsym()*/
 #endif // FTD2XX_STATIC
@@ -197,7 +197,7 @@ status=FT_INVALID_PARAMETER ; return(status);}else{;}};
 	typedef signed short  int16;
 	typedef signed long long int64;
 
-	#ifndef __APPLE__
+	#if !defined(__APPLE__) && !defined(__bool_true_false_are_defined)
 	typedef unsigned char	bool;
 	#endif
 
