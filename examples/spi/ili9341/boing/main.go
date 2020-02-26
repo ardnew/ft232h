@@ -20,7 +20,7 @@ func main() {
 
 		ft, err = ft232h.NewFT232HWithDesc(desc)
 		if nil != err {
-			log.Printf("NewFT232HWithDesc(): %+v", err)
+			log.Printf("NewFT232HWithDesc(): %s", err)
 			continue
 		}
 		defer ft.Close()
