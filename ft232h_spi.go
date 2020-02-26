@@ -20,7 +20,7 @@ func spiConfigDefault() *spiConfig {
 	return &spiConfig{
 		clockRate:  SPIClockDefault,
 		latency:    SPILatencyDefault,
-		options:    spiCSActiveDefault | spiCSDefault | spiModeDefault,
+		options:    spiOptionDefault,
 		pin:        spiPinConfigDefault(),
 		chipSelect: spiCSDefault.pin(),
 	}
@@ -39,7 +39,7 @@ const (
 	SPIMode2       spiOption = 0x00000002 // capture on FALL, propagate on RISE
 	SPIMode3       spiOption = 0x00000003 // capture on RISE, propagate on FALL
 	spiModeMask    spiOption = 0x00000003
-	spiModeDefault spiOption = SPIMode0
+	spiModeDefault           = SPIMode0
 
 	// DPins available for chip-select operation
 	spiCSD3      spiOption = 0x00000000 // SPI CS on D3
@@ -48,12 +48,15 @@ const (
 	spiCSD6      spiOption = 0x0000000C // SPI CS on D6
 	spiCSD7      spiOption = 0x00000010 // SPI CS on D7
 	spiCSMask    spiOption = 0x0000001C
-	spiCSDefault spiOption = spiCSD3
+	spiCSDefault           = spiCSD3
 
 	// Other options
 	spiCSActiveLow     spiOption = 0x00000020 // drive pin low to assert CS
 	spiCSActiveHigh    spiOption = 0x00000000 // drive pin high to assert CS
-	spiCSActiveDefault spiOption = spiCSActiveLow
+	spiCSActiveDefault           = spiCSActiveLow
+
+	// default options field of spiConfig
+	spiOptionDefault = spiCSActiveDefault | spiCSDefault | spiModeDefault
 )
 
 // Valid verifies opt isn't equal to the constant for invalid SPI options
@@ -149,7 +152,7 @@ const (
 	spiCSDeAssert spiXferOption = 0x00000004 // deassert CS after end
 
 	// default transfer options
-	spiXferDefault
+	spiXferDefault = spiXferBytes | spiCSManual
 )
 
 //func SPIWarningCSGPIO(pin Pin) error {
@@ -160,7 +163,7 @@ func (spi *SPI) ChangeCS(cs Pin) error {
 
 	if (cs.IsMPSSE() == spi.config.chipSelect.IsMPSSE()) &&
 		(cs.Mask() == spi.config.chipSelect.Mask()) {
-		return nil // no change, provided pin is already CS
+		return nil // no change, provided pin is CS already
 	}
 
 	// clear current CS selection
@@ -251,7 +254,7 @@ func (spi *SPI) Close() error {
 func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
 
 	cs := spi.config.chipSelect
-	opt := spiXferBytes
+	opt := spiXferDefault
 	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
 
 	if start {
