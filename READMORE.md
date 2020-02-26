@@ -1,7 +1,7 @@
 # ft232h
 ##### Go module for the [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to SPI/I²C/UART Protocol Converter with GPIO
 
-**_This is a work-in-progress and not at all stable_**
+_This is a work-in-progress and not at all stable_
 
 ## Features
 - [x] Go **module** compatible with `go get` (see: [Installation](#installation))
