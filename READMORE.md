@@ -4,15 +4,18 @@
 _This is a work-in-progress and not at all stable_
 
 ## Features
-- [x] Go **module** compatible with `go get` (see: [Installation](#installation))
-  - No installation or configuration required
-- [x] **No dynamic library dependencies** (see: [Drivers](#drivers))
-  - Go applications using the module need no additional libraries to be packaged or deployed with the compiled executable
-  - Native drivers are statically linked with Go module, transparent to the consuming application
-- [x] Support for multiple host OS
-  - Linux 32-bit (`386`) and 64-bit (`amd64`, `arm64`) - includes Raspberry Pi models 3 and 4
-  - macOS (`amd64`)
-  - Windows not currently supported
+- [x] GPIO - read/write
+   - all 8 pins on CBUS always available in any mode
+   - 8-bit parallel, and 1-bit serial read/write operations
+- [x] SPI - read/write (SPI modes 0/2 only)
+   - configurable clock rate (30 MHz max)
+   - automatic CS assertion on 5 pins, configurable polarity (or manual CS on any GPIO pin)
+     - multiple slave support, independent clock rates and SPI modes, changeable on the fly
+   - unlimited transfer data length
+     - USB uses 64 KiB packets internally (MPSSE limitation)
+- [ ] I²C - _not yet implementented_
+- [ ] JTAG - _not yet implementented_
+- [ ] UART - _not yet implementented_
 - [x] **TBD** (WIP)
 
 ## Installation
