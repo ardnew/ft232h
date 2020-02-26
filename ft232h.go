@@ -148,12 +148,6 @@ type Pin interface {
 	String() string
 }
 
-// Types representing individual port pins.
-type (
-	DPin uint8 // pin on MPSSE low-byte lines (port "D" on FT232H)
-	CPin uint8 // pin on MPSSE high-byte lines (port "C" on FT232H)
-)
-
 func (p DPin) IsMPSSE() bool  { return true }
 func (p CPin) IsMPSSE() bool  { return false }
 func (p DPin) Mask() uint8    { return uint8(p) }
@@ -162,6 +156,12 @@ func (p DPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
 func (p CPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
 func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
 func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
+
+// Types representing individual port pins.
+type (
+	DPin uint8 // pin bitmask on MPSSE low-byte lines (port "D" of FT232H)
+	CPin uint8 // pin bitmask on MPSSE high-byte lines (port "C" of FT232H)
+)
 
 // Constants related to GPIO pin configuration
 const (
@@ -174,29 +174,26 @@ const (
 	NumCPins = 8 // number of MPSSE high-byte line pins
 )
 
-// Constants defining the available board pins on MPSSE low-byte lines
-const (
-	D0 DPin = 1 << iota
-	D1
-	D2
-	D3
-	D4
-	D5
-	D6
-	D7
-)
+func (p DPin) Valid() bool { return 0 != uint8(p) && uint8(p) < NumDPins }
+func (p CPin) Valid() bool { return 0 != uint8(p) && uint8(p) < NumCPins }
 
-// Constants defining the available board pins on MPSSE high-byte lines
-const (
-	C0 CPin = 1 << iota
-	C1
-	C2
-	C3
-	C4
-	C5
-	C6
-	C7
-)
+// D returns a bitmask DPin with only the given bit at position pin set.
+func D(pin int) DPin {
+	if pin >= 0 && pin < NumDPins {
+		return DPin(1 << pin)
+	} else {
+		return DPin(0) // invalid DPin
+	}
+}
+
+// C returns a bitmask CPin with only the given bit at position pin set.
+func C(pin int) CPin {
+	if pin >= 0 && pin < NumCPins {
+		return CPin(1 << pin)
+	} else {
+		return CPin(0) // invalid CPin
+	}
+}
 
 type deviceInfo struct {
 	index     int

@@ -13,7 +13,7 @@ type spiConfig struct {
 	latency    uint8  // in ms
 	options    spiOption
 	pin        uint32 // port D pins ("low byte lines of MPSSE")
-	chipSelect Pin
+	chipSelect Pin    // may be DPin (MPSSE low byte) or CPin (GPIO)
 }
 
 func spiConfigDefault() *spiConfig {
@@ -21,7 +21,7 @@ func spiConfigDefault() *spiConfig {
 		clockRate:  SPIClockDefault,
 		latency:    SPILatencyDefault,
 		options:    spiCSActiveDefault | spiCSDefault | spiModeDefault,
-		pin:        spiDPinConfigDefault(),
+		pin:        spiPinConfigDefault(),
 		chipSelect: spiCSDefault.pin(),
 	}
 }
@@ -30,6 +30,8 @@ type spiOption uint32
 
 // Constants defining the available options in the SPI configuration struct.
 const (
+	spiOptionInvalid spiOption = 0xAAAAAAAA
+
 	// Known SPI operating modes
 	//   LIMITATION: libMPSSE only supports mode 0 and mode 2 (CPHA==2).
 	SPIMode0       spiOption = 0x00000000 // capture on RISE, propagate on FALL
@@ -37,7 +39,6 @@ const (
 	SPIMode2       spiOption = 0x00000002 // capture on FALL, propagate on RISE
 	SPIMode3       spiOption = 0x00000003 // capture on RISE, propagate on FALL
 	spiModeMask    spiOption = 0x00000003
-	spiModeInvalid spiOption = 0x000000FF
 	spiModeDefault spiOption = SPIMode0
 
 	// DPins available for chip-select operation
@@ -47,7 +48,6 @@ const (
 	spiCSD6      spiOption = 0x0000000C // SPI CS on D6
 	spiCSD7      spiOption = 0x00000010 // SPI CS on D7
 	spiCSMask    spiOption = 0x0000001C
-	spiCSInvalid spiOption = 0x000000FF
 	spiCSDefault spiOption = spiCSD3
 
 	// Other options
@@ -56,20 +56,30 @@ const (
 	spiCSActiveDefault spiOption = spiCSActiveLow
 )
 
+// Valid verifies opt isn't equal to the constant for invalid SPI options
+func (opt spiOption) Valid() bool { return opt != spiOptionInvalid }
+
+// pin translates a chip-select mask opt from an SPI configuration struct option
+// to its corresponding DPin.
 func (opt spiOption) pin() DPin {
+	if !opt.Valid() {
+		return DPin(0)
+	}
 	switch opt {
-	case spiCSD3:
-		return D3
-	case spiCSD4:
-		return D4
-	case spiCSD5:
-		return D5
-	case spiCSD6:
-		return D6
-	case spiCSD7:
-		return D7
+	case spiCSD3, spiCSD4, spiCSD5, spiCSD6, spiCSD7:
+		return D(int(opt>>2) + 3)
 	default:
-		return spiCSDefault.pin()
+		return DPin(0)
+	}
+}
+
+// spiOption translates a DPin p to its corresponding chip-select mask for an
+// SPI configuration struct option.
+func (p DPin) spiOption() spiOption {
+	if p.Valid() && p >= 3 {
+		return (spiOption(p.Pos()) << 2) & spiCSMask
+	} else {
+		return spiOptionInvalid
 	}
 }
 
@@ -80,55 +90,49 @@ const (
 	SPILatencyDefault byte   = 16       // 1-255 USB HiSpeed, 2-255 USB FullSpeed
 )
 
-// spiCSPin translates a DPin value to its corresponding chip-select mask for
-// the SPI configuration struct option.
-var spiCSPin = map[DPin]spiOption{
-	D0: spiCSInvalid,
-	D1: spiCSInvalid,
-	D2: spiCSInvalid,
-	D3: spiCSD3,
-	D4: spiCSD4,
-	D5: spiCSD5,
-	D6: spiCSD6,
-	D7: spiCSD7,
-}
-
-// spiDPinConfig represents the default direction and value for pins associated
+// spiPinConfig represents the default direction and value for pins associated
 // with the lower byte lines of MPSSE, reserved for serial functions SPI/I²C
 // (or port "D" on FT232H), but has a few GPIO pins as well.
-type spiDPinConfig struct {
+type spiPinConfig struct {
 	initDir  byte // direction of lines after SPI channel initialization
 	initVal  byte // value of lines after SPI channel initialization
 	closeDir byte // direction of lines after SPI channel is closed
 	closeVal byte // value of lines after SPI channel is closed
 }
 
-// spiDPinConfigDefault defines the initial spiDPinConfig value for all pins
+// spiPin creates a bitmask from the DPin p and spiPinConfig cfg for the pin
+// field of an SPI configuration struct.
+func (p DPin) spiPin(cfg *spiPinConfig) uint32 {
+	if p.Valid() {
+		pos := p.Pos()
+		return 0 | // <- for formatting
+			(uint32(cfg.initDir) << (pos + 0)) |
+			(uint32(cfg.initVal) << (pos + 8)) |
+			(uint32(cfg.closeDir) << (pos + 16)) |
+			(uint32(cfg.closeVal) << (pos + 24))
+	} else {
+		return 0
+	}
+}
+
+// spiPinConfigDefault defines the initial spiPinConfig value for all pins
 // represented by this type. all output pins are configured LOW except for the
 // default CS pin (D3) since we also have spiCSActiveLow by default. this means
 // we won't activate the default slave line until intended. it also means SCLK
 // idles LOW (change initVal to PinHI to idle HIGH).
-func spiDPinConfigDefault() uint32 {
-	return spiDPin([NumDPins]*spiDPinConfig{
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D0 SCLK
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D1 MOSI
-		&spiDPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D2 MISO
-		&spiDPinConfig{initDir: PinOT, initVal: PinHI, closeDir: PinOT, closeVal: PinHI}, // D3 CS
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D4 GPIO
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D5 GPIO
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D6 GPIO
-		&spiDPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D7 GPIO
-	})
-}
-
-// spiDPin constructs the 32-bit field pin of the spiConfig struct from the
-// provided spiDPinConfig slice cfg for each pin (identified by its index in the
-// given slice).
-func spiDPin(cfg [NumDPins]*spiDPinConfig) uint32 {
+func spiPinConfigDefault() uint32 {
 	var pin uint32
-	for i, c := range cfg {
-		pin |= (uint32(c.initDir) << i) | (uint32(c.initVal) << (8 + i)) |
-			(uint32(c.closeDir) << (16 + i)) | (uint32(c.closeVal) << (24 + i))
+	for i, cfg := range [NumDPins]*spiPinConfig{
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D0 SCLK
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D1 MOSI
+		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D2 MISO
+		&spiPinConfig{initDir: PinOT, initVal: PinHI, closeDir: PinOT, closeVal: PinHI}, // D3 CS
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D4 GPIO
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D5 GPIO
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D6 GPIO
+		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D7 GPIO
+	} {
+		pin |= D(i).spiPin(cfg)
 	}
 	return pin
 }
@@ -140,8 +144,12 @@ const (
 	spiXferBytes spiXferOption = 0x00000000 // size is provided in bytes
 	spiXferBits  spiXferOption = 0x00000001 // size is provided in bits
 
+	spiCSManual   spiXferOption = 0x00000000
 	spiCSAssert   spiXferOption = 0x00000002 // assert CS before start
 	spiCSDeAssert spiXferOption = 0x00000004 // deassert CS after end
+
+	// default transfer options
+	spiXferDefault
 )
 
 //func SPIWarningCSGPIO(pin Pin) error {
@@ -159,8 +167,8 @@ func (spi *SPI) ChangeCS(cs Pin) error {
 	spi.config.options &= ^(spiCSMask)
 
 	if cs.IsMPSSE() {
-		var csOpt spiOption
-		if csOpt, ok := spiCSPin[cs.(DPin)]; !ok || (spiCSInvalid == csOpt) {
+		csOpt := cs.(DPin).spiOption()
+		if !csOpt.Valid() {
 			return fmt.Errorf("invalid CS pin: %d", cs)
 		}
 		spi.config.options |= csOpt
@@ -260,7 +268,8 @@ func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
 		if cs.IsMPSSE() {
 			opt |= spiCSDeAssert
 		} else {
-			defer func() { _ = spi.device.GPIO.Set(cs.(CPin), !ass) }()
+			// deassert on return
+			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
 		}
 	}
 
