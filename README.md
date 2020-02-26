@@ -66,4 +66,10 @@ So to get started, please review the [driver package](drv/ili9341) and companion
 
 In the mean-time, **_[hold on to your butts](https://www.youtube.com/watch?v=-W6as8oVcuM)_**, and watch the above mentioned `ili9341` driver package with `boing` companion application in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running straight from my desktop!
 
-[![ILI9341 with FT232H and golang](https://img.youtube.com/vi/H-9oN2VmrUw/0.jpg)](https://www.youtube.com/watch?v=H-9oN2VmrUw "ILI9341 with FT232H and golang")
+<p align=center>
+	<a href="https://www.youtube.com/watch?v=H-9oN2VmrUw">
+		ILI9341 with FT232H and golang<br/>
+		<img src="https://img.youtube.com/vi/H-9oN2VmrUw/0.jpg" alt="ILI9341 with FT232H and golang"><br/>
+		https://www.youtube.com/watch?v=H-9oN2VmrUw<br/>
+	</a>
+</p>
