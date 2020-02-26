@@ -1,9 +1,9 @@
+## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
+
 # ft232h
 ##### Go module for the [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to SPI/I²C/UART Protocol Converter with GPIO
 
-**_This is a work-in-progress and not at all stable_**
-
-> **This document is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
+_This is a work-in-progress and not at all stable_
 
 ## Features
 - [x] **TBD** (WIP)
