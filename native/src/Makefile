@@ -24,6 +24,7 @@ os       = linux
 #os       = darwin
 arch     = amd64
 #arch     = 386
+#arch     = arm
 #arch     = arm64
 
 
@@ -31,6 +32,7 @@ arch     = amd64
 
 cross   =
 #cross   = i686-linux-gnu-
+#cross   = arm-linux-gnueabihf-
 #cross   = aarch64-linux-gnu-
 objdump = $(cross)objdump
 CC      = $(cross)gcc
