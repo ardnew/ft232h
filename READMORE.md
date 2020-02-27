@@ -58,6 +58,7 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 
 ## Usage
 > The obligatory ~~useless~~basic example
+
 Simply import the module and open the device:
 ```go
 import (
