@@ -9,10 +9,10 @@
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
 - [x] `SPI` - read/write
-   - SPI `Mode0` and `Mode2` only, i.e. `CPHA=1`
+   - SPI modes `0` and `2` only, i.e. `CPHA=1`
    - configurable clock rate up to 30 MHz
-   - chip/slave-select `CS` on both ports, pins `D3—D7`, `C0—C7`, including:
-     - automatic assert-on-write/read, configurable polarity
+   - chip/slave-select `CS` on both ports (pins `D3—D7`, `C0—C7`), including:
+     - automatic assert-on-write/read with configurable polarity
      - multi-slave support with independent clocks `SCLK`, SPI modes, `CPOL`, etc.
    - unlimited effective transfer time/size
      - USB uses 64 KiB packets internally
