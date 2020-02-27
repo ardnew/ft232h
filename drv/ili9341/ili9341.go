@@ -233,22 +233,20 @@ func (c RGB) Buffer(n uint) []uint8 {
 	return c.Pack().Buffer(n)
 }
 
-type RGBWheel uint8
-
-func (w *RGBWheel) Next() RGB {
-
-	p := uint8(*w)
-	*w++
-
-	p = 0xFF - p
-	if p < 0x55 {
-		return RGB{int16(p * 0x03), int16(0xFF - p*0x03), int16(0x00)}
-	} else if p < 0xAA {
-		p -= 0x55
-		return RGB{int16(0xFF - p*0x03), int16(0x00), int16(p * 0x03)}
-	} else {
-		p -= 0xAA
-		return RGB{int16(0x00), int16(p * 0x03), int16(0xFF - p*0x03)}
+func Wheel() func() RGB {
+	var pos uint8
+	return func() RGB {
+		p := 0xFF - pos
+		pos++
+		if p < 0x55 {
+			return RGB{int16(p * 0x03), int16(0xFF - p*0x03), int16(0x00)}
+		} else if p < 0xAA {
+			p -= 0x55
+			return RGB{int16(0xFF - p*0x03), int16(0x00), int16(p * 0x03)}
+		} else {
+			p -= 0xAA
+			return RGB{int16(0x00), int16(p * 0x03), int16(0xFF - p*0x03)}
+		}
 	}
 }
 
