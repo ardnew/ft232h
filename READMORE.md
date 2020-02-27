@@ -66,7 +66,7 @@ import (
 )
 
 func main() {
-	// open the fist MPSSr-capable USB device found
+	// open the fist MPSSE-capable USB device found
 	ft, err := ft232h.NewFT232H()
 	if nil != err {
 		log.Fatalf("NewFT232H(): %s", err)
