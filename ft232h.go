@@ -146,6 +146,8 @@ type Pin interface {
 	Mask() uint8
 	Pos() uint8
 	String() string
+	Valid() bool
+	Equals(q Pin) bool
 }
 
 func (p DPin) IsMPSSE() bool  { return true }
@@ -156,6 +158,11 @@ func (p DPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
 func (p CPin) Pos() uint8     { return uint8(math.Log2(float64(p))) }
 func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
 func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
+func (p DPin) Valid() bool    { return 0 != uint8(p) }
+func (p CPin) Valid() bool    { return 0 != uint8(p) }
+
+func (p DPin) Equals(q Pin) bool { return q.IsMPSSE() && p.Mask() == q.Mask() }
+func (p CPin) Equals(q Pin) bool { return !q.IsMPSSE() && p.Mask() == q.Mask() }
 
 // Types representing individual port pins.
 type (
@@ -173,9 +180,6 @@ const (
 	NumDPins = 8 // number of MPSSE low-byte line pins
 	NumCPins = 8 // number of MPSSE high-byte line pins
 )
-
-func (p DPin) Valid() bool { return 0 != uint8(p) && uint8(p) < NumDPins }
-func (p CPin) Valid() bool { return 0 != uint8(p) && uint8(p) < NumCPins }
 
 // D returns a bitmask DPin with only the given bit at position pin set.
 func D(pin int) DPin {

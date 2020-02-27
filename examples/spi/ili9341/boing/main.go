@@ -27,9 +27,9 @@ func main() {
 		log.Printf("%s", ft)
 
 		lcd, err = ili9341.InitILI9341(ft, &ili9341.Config{
-			PinCS:  ft232h.D3,
-			PinDC:  ft232h.C0,
-			PinRST: ft232h.C4,
+			PinCS:  ft232h.D(3),
+			PinDC:  ft232h.C(0),
+			PinRST: ft232h.C(4),
 			Rotate: ili9341.RotLeft,
 		})
 		if err != nil {

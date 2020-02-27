@@ -29,11 +29,10 @@ func NewILI9341(ft *ft232h.FT232H, config *Config) (*ILI9341, error) {
 		return nil, fmt.Errorf("data/command pin not provided")
 	}
 
-	// configure at 30MHz, 16ms latency, CS active low, SPI mode 0
-	if err := ft.SPI.SetConfig(30000000, 16, config.PinCS, true, 0); nil != err {
-		return nil, err
-	}
-	if err := ft.SPI.Init(); nil != err {
+	// configure CS active low, SPI mode 0, at 30MHz, 16ms latency
+	c := ft232h.NewSPIConfig(config.PinCS, true, 0, 30000000, 16)
+
+	if err := ft.SPI.Init(c); nil != err {
 		return nil, err
 	}
 

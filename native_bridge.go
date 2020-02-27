@@ -272,7 +272,7 @@ func _SPI_InitChannel(spi *SPI) error {
 	return nil
 }
 
-func _SPI_ChangeCS(spi *SPI) error {
+func _SPI_Change(spi *SPI) error {
 	stat := Status(C.SPI_ChangeCS(C.PVOID(spi.device.info.handle),
 		C.uint32(spi.config.options)))
 	if !stat.OK() {
