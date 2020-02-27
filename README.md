@@ -1,15 +1,13 @@
 ## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
 
-# ft232h
-##### Go module for [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
-
-_This is a work-in-progress and not at all stable_
+# ft232h (**`WIP`**)
+##### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
 ## Features
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
-- [x] `SPI` - read/write 
+- [x] `SPI` - read/write
    - SPI `Mode0` and `Mode2` only, i.e. `CPHA=1`
    - configurable clock rate up to 30 MHz
    - chip/slave-select `CS` on both ports, pins `D3—D7`, `C0—C7`, including:
@@ -27,14 +25,14 @@ Installation is conventional, just use the Go built-in package manager:
 ```sh
 go get -v github.com/ardnew/ft232h
 ```
-No other libraries or configuration is required. 
+No other libraries or configuration is required.
 
 ###### Common issues
 If you have trouble finding/opening your device in Linux, you probably have the incompatible module `ftdi_sio` loaded. See the Linux `Installation` section in [`READMORE`](READMORE.md) for details.
 
 ## Supported platforms
 Internally, `ft232h` depends on some proprietary software from FTDI that is only available for a handful of platforms (binary-only). This would therefore be the only platforms supported by the `ft232h` Go module:
-#### Linux 
+#### Linux
 - [x] x86 (32-bit) `[386]`
 - [x] x86_64 (64-bit) `[amd64]`
 - [x] ARMv7 (32-bit) `[arm]` - includes Raspberry Pi models 3 and 4
@@ -55,7 +53,7 @@ import (
 	"github.com/ardnew/ft232h"
 )
 
-
+func main() {
 	// open the fist MPSSr-capable USB device found
 	ft, err := ft232h.NewFT232H()
 	if nil != err {
@@ -69,7 +67,7 @@ import (
 ```
 
 ## Peripheral devices
-Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on the `ft232h` Go platform for your own devices—the hard work of binding a Go runtime to the physcial GPIO/SPI/I²C/JTAG/UART interfaces on the FT232H has been done for you! 
+Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on the `ft232h` Go platform for your own devices—the hard work of binding a Go runtime to the physcial GPIO/SPI/I²C/JTAG/UART interfaces on the FT232H has been done for you!
 
 [An basic driver for the ILI9341 TFT LCD with SPI+GPIO](drv/ili9341), along with [a fun demo application that uses it](examples/spi/ili9341/boing), has been created to serve as a reference example.
 
