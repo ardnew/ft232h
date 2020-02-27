@@ -1,9 +1,10 @@
 ## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
 
-# ft232h (**`WIP`**)
-##### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
+# ft232h 
+### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
-## Features
+## API features
+#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
@@ -27,7 +28,7 @@ go get -v github.com/ardnew/ft232h
 ```
 No other libraries or configuration is required.
 
-###### Common issues
+###### Linux
 If you have trouble finding/opening your device in Linux, you probably have the incompatible module `ftdi_sio` loaded. See the Linux `Installation` section in [`READMORE`](READMORE.md) for details.
 
 ## Supported platforms
@@ -62,13 +63,13 @@ func main() {
 	defer ft.Close() // be sure to close device
 
 	// do stuff
-	log.Printf("ᵈᵒⁱⁿᵍ ˢᵗᵘᶠᶠ ᴅᴏɪɴɢ sᴛᴜғғ DOING STUFF: %s", ft)
+	log.Printf("doing stuff with device: %s", ft)
 }
 ```
 
 ## Peripheral devices
-Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on the `ft232h` Go platform for your own devices—the hard work of binding a Go runtime to the physcial GPIO/SPI/I²C/JTAG/UART interfaces on the FT232H has been done for you!
+Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on this API for your own devices. It's a lot more fun developing device drivers with the full Go ecosystem at your disposal!
 
-[An basic driver for the ILI9341 TFT LCD with SPI+GPIO](drv/ili9341), along with [a fun demo application that uses it](examples/spi/ili9341/boing), has been created to serve as a reference example.
+A basic [driver for the ILI9341 TFT LCD](drv/ili9341) using `ft232h.SPI` and `ft232h.GPIO` – along with a [demo application](examples/spi/ili9341/boing) drawing an animated bouncing ball – has been created to serve as a reference implementation.
 
-For more details, be sure to read the `Peripheral devices` section  in [`READMORE`](READMORE.md); and, of course, the godoc for this `ft232h` module.
+For more details, be sure to read the `Peripheral devices` section  in [`READMORE`](READMORE.md) and, of course, the godoc for this `ft232h` module.
