@@ -68,7 +68,7 @@ func main() {
 ```
 
 ## Peripheral devices
-Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on this API for your own devices. It's a lot more fun developing device drivers with the full Go ecosystem at your disposal!
+Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on this API for your own devices. It's a lot more fun developing device drivers with the full, native Go ecosystem on your PC at your disposal!
 
 A basic [driver for the ILI9341 TFT LCD](drv/ili9341) using `ft232h.SPI` and `ft232h.GPIO` – along with a [demo application](examples/spi/ili9341/boing) drawing an animated bouncing ball – has been created to serve as a reference implementation.
 
