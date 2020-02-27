@@ -1,17 +1,16 @@
-# ft232h (**`WIP`**)
-##### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
+# ft232h 
+### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
-_This is a work-in-progress and not at all stable_
-
-## Features
+## API features
+#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
 - [x] `SPI` - read/write
-   - SPI `Mode0` and `Mode2` only, i.e. `CPHA=1`
+   - SPI modes `0` and `2` only, i.e. `CPHA=1`
    - configurable clock rate up to 30 MHz
-   - chip/slave-select `CS` on both ports, pins `D3—D7`, `C0—C7`, including:
-     - automatic assert-on-write/read, configurable polarity
+   - chip/slave-select `CS` on both ports (pins `D3—D7`, `C0—C7`), including:
+     - automatic assert-on-write/read with configurable polarity
      - multi-slave support with independent clocks `SCLK`, SPI modes, `CPOL`, etc.
    - unlimited effective transfer time/size
      - USB uses 64 KiB packets internally
@@ -21,7 +20,7 @@ _This is a work-in-progress and not at all stable_
 - [x] **TBD** (WIP)
 
 ## Installation
-Installing the module can be done with the Go built-in package manager. If you are not [using Go modules](https://blog.golang.org/using-go-modules) for your application (or are unsure), use the following:
+If you are not [using Go modules](https://blog.golang.org/using-go-modules) for your application (or are unsure), use the built-in `go` package manager:
 ```sh
 go get -u -v github.com/ardnew/ft232h
 ```
@@ -58,41 +57,49 @@ sudo rmmod ftdi_sio
 Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
 ## Usage
-The obligatory ~~useless~~basic example:
+> The obligatory ~~useless~~basic example
 Simply import the module and open the device:
 ```go
 import (
-  "log"
-  "github.com/ardnew/ft232h"
+	"log"
+	"github.com/ardnew/ft232h"
 )
 
 func main() {
-  // open the fist MPSSr-capable USB device found
-  ft, err := ft232h.NewFT232H()
-  if nil != err {
-    log.Fatalf("NewFT232H(): %s", err)
-  }
-  defer ft.Close() // be sure to close device
+	// open the fist MPSSr-capable USB device found
+	ft, err := ft232h.NewFT232H()
+	if nil != err {
+		log.Fatalf("NewFT232H(): %s", err)
+	}
+	defer ft.Close() // be sure to close device
 
-  // do stuff
-  log.Printf("ᵈᵒⁱⁿᵍ ˢᵗᵘᶠᶠ ᴅᴏɪɴɢ sᴛᴜғғ DOING STUFF: %s", ft)
+	// do stuff
+	log.Printf("doing stuff with device: %s", ft)
 }
 ```
 I'm sure that was very helpful.
 
 ## Peripheral devices
 #### Getting started
-The great thing about the FT232H is being able to communicate over regular USB with peripheral devices using GPIO and several different serial protocols – SPI and I²C in particular – and being able to use standard Go straight from your PC makes that even greater. No need to stumble around programming a microcontroller just to mediate the communication.
+The great thing about the FT232H is being able to communicate with the plethora of GPIO and serial peripheral devices – which usually require the hardware interfaces found on low-power microcontrollers – with nothing but a USB cable directly from your PC. 
 
-Adding support for a peripheral device is straight-forward. You can either create a new driver package under [`drv/`](drv), or you can simply interact with the interface directly from your application.
+However, the official device drivers required to control the FT232H are quite complex and require an understanding of microcontroller programming in C. This `ft232h` module greatly simplifies that programming interface, bridging many of those peripherals with the native Go ecosystem of common PCs.
 
-To demonstrate this, a basic [driver package](drv/ili9341) was created to drive an ILI9341 320x240 TFT LCD using the `ft232h.SPI` interface with methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
+Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details. 
 
-These methods alone in [the driver package](drv/ili9341) were sufficient to implement the other half of this demonstration – an [example application](examples/spi/ili9341/boing) using the ILI9341 driver package. This application was a port of the [tinygo project](https://tinygo.org/)'s ILI9341 device driver example [`pyportal_boing`](https://github.com/tinygo-org/drivers/tree/master/examples/ili9341/pyportal_boing), which was in turn a port of Adafruit's [original Arduino demo](https://github.com/adafruit/Adafruit_ILI9341/tree/master/examples/pyportal_boing) released for their PyPortal.
+You can create a new driver package under [`drv/`](drv) to encapsulate and reuse the definitions and procedures provided by the peripheral device, or you can simply interact with the FT232H interfaces directly from your application.
 
-So to get started, please review the [driver package](drv/ili9341) and companion application [`boing`](examples/spi/ili9341/boing) for details on how this `ft232h` go module is intended for use, which should also help you become familiar with the API and general architecture. The design was intended to be as concise and general-purpose as possible, to not litter the namespace with subtleties, yet low-level enough to wield some _Real Power_.
+To demonstrate this, a basic driver package [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) was created to drive an ILI9341 320x240 TFT LCD using the `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
 
-In the mean-time, **_[hold on to your butts](https://www.youtube.com/watch?v=-W6as8oVcuM)_**, and watch the above mentioned `ili9341` driver package with `boing` companion application in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running straight from my desktop!
+These methods alone were sufficient to implement the other half of the demonstration – an example application [`boing`](examples/spi/ili9341/boing) using the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver. 
+- This application was a port of the [tinygo project](https://tinygo.org/)'s ILI9341 device driver example [`pyportal_boing`](https://github.com/tinygo-org/drivers/tree/master/examples/ili9341/pyportal_boing)
+  - And this was in turn a port of Adafruit's [original Arduino demo](https://github.com/adafruit/Adafruit_ILI9341/tree/master/examples/pyportal_boing) released for their PyPortal
+
+So to get started, please review the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver and [`boing`](examples/spi/ili9341/boing) application for details on how this `ft232h` Go module is intended for use, which should also help you become familiar with the API and general architecture. 
+
+The design was intended to be as concise and general-purpose as possible, to not litter the namespace with subtleties, yet low-level enough to wield some _Real Power_.
+
+In the mean-time, **_[hold on to your butts](https://www.youtube.com/watch?v=-W6as8oVcuM)_**, and watch the above mentioned `ili9341` driver package with `boing` application in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running straight from my desktop!
 
 <p align=center>
 	<a href="https://www.youtube.com/watch?v=H-9oN2VmrUw">
