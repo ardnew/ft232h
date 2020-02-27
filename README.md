@@ -1,11 +1,23 @@
 ## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
 
 # ft232h
-##### Go module for the [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to SPI/I²C/UART Protocol Converter with GPIO
+##### Go module for [FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
 _This is a work-in-progress and not at all stable_
 
 ## Features
+- [x] GPIO - read/write
+   - all 8 pins on CBUS always available in any mode
+   - 8-bit parallel, and 1-bit serial read/write operations
+- [x] SPI - read/write (SPI modes 0/2 only)
+   - configurable clock rate (30 MHz max)
+   - automatic CS assertion on 5 pins, configurable polarity (or manual CS on any GPIO pin)
+     - multiple slave support, independent clock rates and SPI modes, changeable on the fly
+   - unlimited transfer data length
+     - USB uses 64 KiB packets internally (MPSSE limitation)
+- [ ] I²C - _not yet implementented_
+- [ ] JTAG - _not yet implementented_
+- [ ] UART - _not yet implementented_
 - [x] **TBD** (WIP)
 
 ## Installation
