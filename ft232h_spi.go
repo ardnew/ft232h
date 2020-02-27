@@ -162,8 +162,8 @@ func (opt spiOption) activeLow() bool {
 // spiOptionCS translates a DPin p to its corresponding chip-select mask for the
 // option field of an SPI configuration struct.
 func (p DPin) spiOptionCS() spiOption {
-	if p.Valid() && p >= 3 {
-		return (spiOption(p.Pos()) << 2) & spiCSMask
+	if p.Valid() && p.Pos() >= 3 {
+		return (spiOption(p.Pos()-3) << 2) & spiCSMask
 	} else {
 		return spiOptionInvalid
 	}
