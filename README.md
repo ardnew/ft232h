@@ -6,18 +6,20 @@
 _This is a work-in-progress and not at all stable_
 
 ## Features
-- [x] GPIO - read/write
-   - all 8 pins on CBUS always available in any mode
+- [x] `GPIO` - read/write
+   - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
-- [x] SPI - read/write (SPI modes 0/2 only)
-   - configurable clock rate (30 MHz max)
-   - automatic CS assertion on 5 pins, configurable polarity (or manual CS on any GPIO pin)
-     - multiple slave support, independent clock rates and SPI modes, changeable on the fly
-   - unlimited transfer data length
-     - USB uses 64 KiB packets internally (MPSSE limitation)
-- [ ] I²C - _not yet implementented_
-- [ ] JTAG - _not yet implementented_
-- [ ] UART - _not yet implementented_
+- [x] `SPI` - read/write 
+   - SPI `Mode0` and `Mode2` only, i.e. `CPHA=1`
+   - configurable clock rate up to 30 MHz
+   - chip/slave-select `CS` on both ports, pins `D3—D7`, `C0—C7`, including:
+     - automatic assert-on-write/read, configurable polarity
+     - multi-slave support with independent clocks `SCLK`, SPI modes, `CPOL`, etc.
+   - unlimited effective transfer time/size
+     - USB uses 64 KiB packets internally
+- [ ] `I2C` - _not yet implementented_
+- [ ] `JTAG` - _not yet implementented_
+- [ ] `UART` - _not yet implementented_
 - [x] **TBD** (WIP)
 
 ## Installation
@@ -53,18 +55,22 @@ import (
 	"github.com/ardnew/ft232h"
 )
 
-func main() {
-	// open the first MPSSE-capable USB device found
+
+	// open the fist MPSSr-capable USB device found
 	ft, err := ft232h.NewFT232H()
 	if nil != err {
 		log.Fatalf("NewFT232H(): %s", err)
 	}
 	defer ft.Close() // be sure to close device
-	log.Printf("%s", ft)
+
+	// do stuff
+	log.Printf("ᵈᵒⁱⁿᵍ ˢᵗᵘᶠᶠ ᴅᴏɪɴɢ sᴛᴜғғ DOING STUFF: %s", ft)
 }
 ```
 
-## Peripherals
-Adding support for a peripheral SPI/I²C device is straight-forward. You can either create a new driver package under [`drv/`](drv), or you can simply interact with the interface directly from your application. 
+## Peripheral devices
+Of course the FT232H isn't that useful without a device to interact with. You are encouraged to create drivers or adapters based on the `ft232h` Go platform for your own devices—the hard work of binding a Go runtime to the physcial GPIO/SPI/I²C/JTAG/UART interfaces on the FT232H has been done for you! 
 
-To demonstrate this, a couple packages were created to act as reference and example. Please follow along in the `Peripherals` section in [`READMORE`](READMORE.md) for guidance.
+[An basic driver for the ILI9341 TFT LCD with SPI+GPIO](drv/ili9341), along with [a fun demo application that uses it](examples/spi/ili9341/boing), has been created to serve as a reference example.
+
+For more details, be sure to read the `Peripheral devices` section  in [`READMORE`](READMORE.md); and, of course, the godoc for this `ft232h` module.
