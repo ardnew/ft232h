@@ -1,5 +1,3 @@
-// Package ft232h provides a high-level interface to the FTDI FT232H USB to
-// SPI/I²C/UART/GPIO protocol converter.
 package ft232h
 
 import (
