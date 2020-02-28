@@ -29,12 +29,12 @@ func NewSPIConfig(cs Pin, activeLow bool, mode byte, clock uint32, latency byte)
 // SPIConfigDefault returns the default configuration settings for an SPI
 // interface.
 func SPIConfigDefault() *SPIConfig {
-	return spiConfigDefault().SPIConfig()
+	return spiConfigDefault().GetConfig()
 }
 
 // SPIConfig returns the current configuration settings of the SPI receiver.
 func (spi *SPI) SPIConfig() *SPIConfig {
-	return spi.config.SPIConfig()
+	return spi.config.GetConfig()
 }
 
 // Constants related to SPI interface initialization.
@@ -67,9 +67,9 @@ func spiConfigDefault() *spiConfig {
 	}
 }
 
-// SPIConfig constructs an SPI configuration struct using the settings stored in
+// GetConfig constructs an SPI configuration struct using the settings stored in
 // the private configuration field of an instance of SPI.
-func (c *spiConfig) SPIConfig() *SPIConfig {
+func (c *spiConfig) GetConfig() *SPIConfig {
 	return &SPIConfig{
 		SPIOption: NewSPIOption(c.options.cs(), c.options.activeLow(), c.options.mode()),
 		Clock:     c.clockRate,
