@@ -5,19 +5,19 @@ package ft232h
 // The GPIO interface is always initialized and available in any mode.
 type GPIO struct {
 	device *FT232H
-	config *gpioConfig
+	config *GPIOConfig
 }
 
-// gpioConfig stores the most-recently read/written pin levels and directions.
-type gpioConfig struct {
+// GPIOConfig stores the most-recently read/written pin levels and directions.
+type GPIOConfig struct {
 	dir uint8
 	val uint8
 }
 
-// gpioConfigDefault returns the default pin levels and directions for the GPIO
+// GPIOConfigDefault returns the default pin levels and directions for the GPIO
 // interface. All pins are configured as outputs at logic level LOW by default.
-func gpioConfigDefault() *gpioConfig {
-	return &gpioConfig{
+func GPIOConfigDefault() *GPIOConfig {
+	return &GPIOConfig{
 		dir: 0xFF, // each bit set, all pins OUTPUT by default
 		val: 0x00, // each bit clear, all pins LOW by default
 	}
@@ -31,7 +31,7 @@ func (gpio *GPIO) Init() error {
 
 // Config configures all GPIO pin directions and values to the settings defined
 // in the given cfg, returning a non-nil error if unsuccessful.
-func (gpio *GPIO) Config(cfg *gpioConfig) error {
+func (gpio *GPIO) Config(cfg *GPIOConfig) error {
 	return gpio.Write(cfg.dir, cfg.val)
 }
 

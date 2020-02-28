@@ -81,7 +81,7 @@ func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
 	}
 	m.I2C = &I2C{device: m, config: i2cConfigDefault()}
 	m.SPI = &SPI{device: m, config: spiConfigDefault()}
-	m.GPIO = &GPIO{device: m, config: gpioConfigDefault()}
+	m.GPIO = &GPIO{device: m, config: GPIOConfigDefault()}
 	if err := m.GPIO.Init(); nil != err {
 		return nil, err
 	}
