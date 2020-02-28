@@ -13,7 +13,7 @@ and user guide (glorified header) as the only documentation resources available.
 
 FTDI Driver Documentation
 
-The following links contain useful documentation on FTDI USB device programming:
+The following links contain the relevant FTDI documentation:
 
       FT232H Datasheet: https://github.com/ardnew/ft232h/blob/master/doc/FT232H-datasheet.pdf
            D2XX Manual: https://github.com/ardnew/ft232h/blob/master/doc/D2XX-user-guide.pdf
