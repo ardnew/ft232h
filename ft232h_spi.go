@@ -99,12 +99,12 @@ type spiOption uint32
 
 // Constants defining SPI operating modes (supports mode 0 and 2 only (CPHA=2))
 const (
-	SPIMode0       spiOption = 0x00000000 // capture on RISE, propagate on FALL
-	SPIMode1       spiOption = 0x00000001 // capture on FALL, propagate on RISE
-	SPIMode2       spiOption = 0x00000002 // capture on FALL, propagate on RISE
-	SPIMode3       spiOption = 0x00000003 // capture on RISE, propagate on FALL
+	spiMode0       spiOption = 0x00000000 // capture on RISE, propagate on FALL
+	spiMode1       spiOption = 0x00000001 // capture on FALL, propagate on RISE
+	spiMode2       spiOption = 0x00000002 // capture on FALL, propagate on RISE
+	spiMode3       spiOption = 0x00000003 // capture on RISE, propagate on FALL
 	spiModeMask    spiOption = 0x00000003
-	spiModeDefault           = SPIMode0
+	spiModeDefault           = spiMode0
 )
 
 // Constants defining CS pins capable of using auto-assertion (DBUS pins only)
@@ -264,10 +264,10 @@ func (spi *SPI) Change(cs Pin) error {
 	return nil
 }
 
-// Config changes the dynamic configuration parameters of the SPI interface.
+// Option changes the dynamic configuration parameters of the SPI interface.
 // It can be called while the SPI interface is open without having to first
 // close and reopen the device.
-func (spi *SPI) Config(opt *SPIOption) error {
+func (spi *SPI) Option(opt *SPIOption) error {
 
 	activeOpt := spiCSActiveHigh
 	if opt.ActiveLow {
@@ -284,11 +284,13 @@ func (spi *SPI) Config(opt *SPIOption) error {
 	return spi.Change(opt.CS)
 }
 
-// Init initializes the SPI interface with the given configuration to a state
+// Config initializes the SPI interface with the given configuration to a state
 // ready for read/write.
-// If the interface is already initialized, it is first closed before setting
-// the new configuration and initializing the interface.
-func (spi *SPI) Init(cfg *SPIConfig) error {
+// If the given configuration is nil, the default configuration is used (see
+// SPIConfigDefault).
+// It is not necessary to call Init after calling Config.
+// See documentation of Init for other semantics.
+func (spi *SPI) Config(cfg *SPIConfig) error {
 
 	if nil == cfg {
 		cfg = SPIConfigDefault()
@@ -310,9 +312,19 @@ func (spi *SPI) Init(cfg *SPIConfig) error {
 		spi.config.latency = cfg.Latency
 	}
 
-	if err := spi.Config(cfg.SPIOption); nil != err {
+	if err := spi.Option(cfg.SPIOption); nil != err {
 		return err
 	}
+
+	return spi.Init()
+}
+
+// Init initializes the SPI interface to a state ready for read/write.
+// If Config has not been called, the default configuration is used (see
+// SPIConfigDefault).
+// If the interface is already initialized, it is first closed before
+// initializing the interface.
+func (spi *SPI) Init() error {
 
 	if err := _SPI_InitChannel(spi); nil != err {
 		return err

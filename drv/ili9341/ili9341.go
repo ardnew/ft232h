@@ -32,24 +32,16 @@ func NewILI9341(ft *ft232h.FT232H, config *Config) (*ILI9341, error) {
 	// configure CS active low, SPI mode 0, at 30MHz, 16ms latency
 	c := ft232h.NewSPIConfig(config.PinCS, true, 0, 30000000, 16)
 
-	if err := ft.SPI.Init(c); nil != err {
+	if err := ft.SPI.Config(c); nil != err {
 		return nil, err
 	}
 
 	lcd := &ILI9341{device: ft, config: config}
 
-	return lcd, nil
-}
-
-func InitILI9341(ft *ft232h.FT232H, config *Config) (*ILI9341, error) {
-
-	lcd, err := NewILI9341(ft, config)
-	if nil != err {
-		return nil, err
-	}
 	if err := lcd.Init(); nil != err {
 		return nil, err
 	}
+
 	return lcd, nil
 }
 

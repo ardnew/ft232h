@@ -26,7 +26,7 @@ func main() {
 		defer ft.Close()
 		log.Printf("%s", ft)
 
-		lcd, err = ili9341.InitILI9341(ft, &ili9341.Config{
+		lcd, err = ili9341.NewILI9341(ft, &ili9341.Config{
 			PinCS:  ft232h.D(3),
 			PinDC:  ft232h.C(0),
 			PinRST: ft232h.C(4),
@@ -123,9 +123,9 @@ func boing(lcd *ili9341.ILI9341) error {
 		if int(ballPrev.y) < minY {
 			minY = int(ballPrev.y)
 		}
-		maxX = int(ballCurr.x + BallWidth)
-		if int(ballPrev.x+BallWidth) > maxX {
-			maxX = int(ballPrev.x + BallWidth)
+		maxX = int(ballCurr.x+BallWidth) - 1
+		if int(ballPrev.x+BallWidth)-1 > maxX {
+			maxX = int(ballPrev.x+BallWidth) - 1
 		}
 		maxY = int(ballCurr.y + BallHeight)
 		if int(ballPrev.y+BallHeight) > maxY {
@@ -133,7 +133,7 @@ func boing(lcd *ili9341.ILI9341) error {
 		}
 
 		width = maxX - minX + 1
-		height = maxY - minY + 1
+		height = maxY - minY + 2
 
 		// Ball animation frame # is incremented opposite the ball's X velocity
 		ballFrame -= ballVel.x * 2.0
@@ -163,7 +163,7 @@ func boing(lcd *ili9341.ILI9341) error {
 		//var p uint8                  // 'packed' value of 2 ball pixels
 		//var bufIdx int8 = 0
 
-		for y := 0; y < int(height); y++ { // For each row...
+		for y := 0; y <= int(height); y++ { // For each row...
 
 			bk = bx // Need to keep the original bx and gx values,
 			gk = gx // so copies of them are made here (and changed in loop below)
@@ -218,7 +218,7 @@ func boing(lcd *ili9341.ILI9341) error {
 			gy++
 		}
 
-		err := lcd.DrawBitmapRect16BPP(minX-1, minY, width-1, height, frameBuffer[:width*height])
+		err := lcd.DrawBitmapRect16BPP(minX, minY, width-1, height-1, frameBuffer[:width*height])
 		if nil != err {
 			return err
 		}
