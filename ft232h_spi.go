@@ -382,9 +382,9 @@ func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
 	return _SPI_Write(spi, data, opt)
 }
 
-// Write writes the given data to the SPI interface, optionally asserting the CS
-// line before writing and/or de-asserting the CS line after writing using the
-// given CS pin.
+// WriteTo writes the given data using the given CS pin to the SPI interface,
+// optionally asserting the CS line before writing and/or de-asserting the CS
+// line after writing.
 // There is no maximum length for the data slice.
 // If the given CS pin is not the same as the currently configured CS pin, the
 // CS configuration is changed and persists after writing.
