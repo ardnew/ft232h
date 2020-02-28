@@ -1,15 +1,21 @@
 package ft232h
 
+// GPIO stores interface configuration settings for the GPIO ("C" port) and
+// provides methods for reading and writing to GPIO pins.
+// The GPIO interface is always initialized and available in any mode.
 type GPIO struct {
 	device *FT232H
 	config *gpioConfig
 }
 
+// gpioConfig stores the most-recently read/written pin levels and directions.
 type gpioConfig struct {
 	dir uint8
 	val uint8
 }
 
+// gpioConfigDefault returns the default pin levels and directions for the GPIO
+// interface. All pins are configured as outputs at logic level LOW by default.
 func gpioConfigDefault() *gpioConfig {
 	return &gpioConfig{
 		dir: 0xFF, // each bit set, all pins OUTPUT by default
@@ -17,10 +23,20 @@ func gpioConfigDefault() *gpioConfig {
 	}
 }
 
+// Init resets all GPIO pin directions and values using the most recently read
+// or written configuration, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Init() error {
 	return gpio.Write(gpio.config.dir, gpio.config.val)
 }
 
+// Config configures all GPIO pin directions and values to the settings defined
+// in the given cfg, returning a non-nil error if unsuccessful.
+func (gpio *GPIO) Config(cfg *gpioConfig) error {
+	return gpio.Write(cfg.dir, cfg.val)
+}
+
+// Write configures all GPIO pin directions and values using the given dir and
+// val bitmasks, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Write(dir uint8, val uint8) error {
 
 	val &= dir // set only the pins configured as OUTPUT
@@ -35,6 +51,8 @@ func (gpio *GPIO) Write(dir uint8, val uint8) error {
 	return nil
 }
 
+// Read returns the current value of all GPIO pins, returning 0 and a non-nil
+// error if unsuccessful.
 func (gpio *GPIO) Read() (uint8, error) {
 
 	val, err := _FT_ReadGPIO(gpio)
@@ -47,6 +65,12 @@ func (gpio *GPIO) Read() (uint8, error) {
 	return val, nil
 }
 
+// Set sets the given pin to output with the given val, returning a non-nil
+// error if unsuccessful.
+// The direction and value of all other pins is set based on the most recently
+// read or written configuration determined prior to calling Set, and are all
+// updated during the call to Set (AFTER writing the configuration). If you need
+// more fine-grained control, use Read/Write instead.
 func (gpio *GPIO) Set(pin CPin, val bool) error {
 
 	dir := gpio.config.dir | uint8(pin)
@@ -61,6 +85,8 @@ func (gpio *GPIO) Set(pin CPin, val bool) error {
 	return gpio.Write(dir, set)
 }
 
+// Get reads the value of the given pin, returning a non-nil error if
+// unsuccessful.
 func (gpio *GPIO) Get(pin CPin) (bool, error) {
 
 	set, err := gpio.Read()

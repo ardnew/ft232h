@@ -13,6 +13,7 @@ package ft232h
 // #include "stdlib.h"
 import "C"
 
+// Type aliases for the native types needed by the C libraries.
 type (
 	Handle C.FT_HANDLE
 	Status C.FT_STATUS
@@ -44,10 +45,13 @@ const (
 	SDeviceListNotReady      Status = C.FT_DEVICE_LIST_NOT_READY
 )
 
+// OK returns true if the status equals SOK, otherwise false.
 func (s Status) OK() bool {
 	return SOK == s
 }
 
+// Error returns the string representation of a status, required by the Go error
+// interface. Returns the string "unknown error" is the status is invalid.
 func (s Status) Error() string {
 	switch s {
 	case SOK:
@@ -95,6 +99,7 @@ func (s Status) Error() string {
 	}
 }
 
+// Constants defining the FTDI chip identifiers specified by FTDI.
 const (
 	CFTBM      Chip = C.FT_DEVICE_BM
 	CFTAM      Chip = C.FT_DEVICE_AM
@@ -115,6 +120,8 @@ const (
 	CUMFTPD3A  Chip = C.FT_DEVICE_UMFTPD3A
 )
 
+// String returns the descriptive string representation of an FTDI chip.
+// Returns the string "invalid chip" if the chip is not defined.
 func (c Chip) String() string {
 	switch c {
 	case CFTBM:
@@ -156,12 +163,15 @@ func (c Chip) String() string {
 	}
 }
 
+// Constants defining the legacy protocols supported by MPSSE.
 const (
 	ModeNone Mode = 0
 	ModeSPI  Mode = 1
 	ModeI2C  Mode = 2
 )
 
+// String returns a string describing the legacy protocol supported by MPSSE.
+// Returns the string "unknown" if the mode is invalid.
 func (m Mode) String() string {
 	switch m {
 	case ModeNone:
@@ -169,12 +179,16 @@ func (m Mode) String() string {
 	case ModeSPI:
 		return "SPI"
 	case ModeI2C:
-		return "I2C"
+		return "I²C"
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
 
+// _FT_CreateDeviceInfoList requests the D2XX driver allocate and populate an
+// internal list of MPSSE-capable USB devices connected to the system, returning
+// the number of devices found if successful.
+// Returns 0 and a non-nil error if the device list could not be created.
 func _FT_CreateDeviceInfoList() (uint, error) {
 	var n C.DWORD
 	stat := Status(C.FT_CreateDeviceInfoList(&n))
@@ -184,6 +198,10 @@ func _FT_CreateDeviceInfoList() (uint, error) {
 	return uint(n), nil
 }
 
+// _FT_GetDeviceInfoList parses and returns a slice of deviceInfo pointers for
+// all devices stored in the internal device list of the D2XX driver.
+// Returns a nil slice and non-nil error if the device list could not be read.
+// Returns an empty slice and nil error if no devices were found in the list.
 func _FT_GetDeviceInfoList(n uint) ([]*deviceInfo, error) {
 	ndev := C.DWORD(n)
 	list := make([]C.FT_DEVICE_LIST_INFO_NODE, n)
@@ -210,6 +228,8 @@ func _FT_GetDeviceInfoList(n uint) ([]*deviceInfo, error) {
 	return info, nil
 }
 
+// _FT_Open attempts to open a raw USB interface through the D2XX driver,
+// returning a non-nil error if unsuccessful.
 func _FT_Open(info *deviceInfo) error {
 	stat := Status(C.FT_Open(C.int(info.index), (*C.PVOID)(&info.handle)))
 	if !stat.OK() {
@@ -218,6 +238,8 @@ func _FT_Open(info *deviceInfo) error {
 	return nil
 }
 
+// _FT_Close attempts to close a USB interface opened through the D2XX driver,
+// returning a non-nil error if unsuccessful.
 func _FT_Close(info *deviceInfo) error {
 	stat := Status(C.FT_Close(C.PVOID(info.handle)))
 	if !stat.OK() {
@@ -226,6 +248,9 @@ func _FT_Close(info *deviceInfo) error {
 	return nil
 }
 
+// _FT_WriteGPIO sets the level val and direction dir for all pins on port "C"
+// of the FT232H using the D2XX driver, returns a non-nil error if the driver
+// could not set the pin configuration.
 func _FT_WriteGPIO(gpio *GPIO, dir uint8, val uint8) error {
 	stat := Status(C.FT_WriteGPIO(C.PVOID(gpio.device.info.handle), C.uint8(dir), C.uint8(val)))
 	if !stat.OK() {
@@ -234,6 +259,8 @@ func _FT_WriteGPIO(gpio *GPIO, dir uint8, val uint8) error {
 	return nil
 }
 
+// _FT_ReadGPIO reads the level of all pins on port "C" of the FT232H using the
+// D2XX driver, returning 0 and a non-nil error if the pins could not be read.
 func _FT_ReadGPIO(gpio *GPIO) (uint8, error) {
 	var val C.uint8
 	stat := Status(C.FT_ReadGPIO(C.PVOID(gpio.device.info.handle), &val))
@@ -243,6 +270,11 @@ func _FT_ReadGPIO(gpio *GPIO) (uint8, error) {
 	return uint8(val), nil
 }
 
+// _SPI_InitChannel initializes the MPSSE engine in SPI master mode with the
+// configuration defined in the given spi using the libMPSSE driver.
+// If the FT232H device is already opened in any mode (including SPI), the
+// interface is first closed before re-opening with the new configuration.
+// Returns a non-nil error if the interface could not be closed or (re)opened.
 func _SPI_InitChannel(spi *SPI) error {
 
 	// close any open channels before trying to init
@@ -272,6 +304,9 @@ func _SPI_InitChannel(spi *SPI) error {
 	return nil
 }
 
+// _SPI_Change reconfigures the dynamic interface parameters of an open SPI
+// interface using the libMPSSE driver, returning a non-nil error if
+// unsuccessful.
 func _SPI_Change(spi *SPI) error {
 	stat := Status(C.SPI_ChangeCS(C.PVOID(spi.device.info.handle),
 		C.uint32(spi.config.options)))
@@ -281,6 +316,11 @@ func _SPI_Change(spi *SPI) error {
 	return nil
 }
 
+// _SPI_Write performs an SPI write using the given open SPI interface and slice
+// of uint8 data and transfer options using the libMPSSE driver, returning a
+// non-nil error if unsuccessful.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// write requests are performed with the libMPSSE driver.
 func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint32, error) {
 
 	// note that MPSSE has a limitation on the size of SPI transfers, since the

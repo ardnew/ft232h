@@ -4,6 +4,8 @@ import "fmt"
 
 // SPI stores interface configuration settings for an SPI master and provides
 // methods for reading and writing to SPI slave devices.
+// The interface must be initialized by calling either Init or Config (not both)
+// before use.
 type SPI struct {
 	device *FT232H
 	config *spiConfig
