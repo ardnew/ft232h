@@ -1,4 +1,4 @@
-# ft232h 
+# ft232h
 ### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
 ## API features
@@ -44,7 +44,7 @@ There are [a lot of ways](https://www.google.com/search?q=d2xx+ftdi_sio) to reso
 
 On Ubuntu, you can simply prevent the VCP module from being auto-loaded at bootup by blacklisting the module. For example, create a new file `/etc/modprobe.d/blacklist-ftdi.conf` with a single directive:
 ```sh
-# the official FTDI driver FTD2XX is incompatible with the VCP driver,
+# the official FTDI driver D2XX is incompatible with the VCP driver,
 # preventing communication with FT232H breakouts
 blacklist ftdi_sio
 ```
@@ -54,7 +54,7 @@ sudo rmmod ftdi_sio
 ```
 
 #### macOS
-Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `FTD2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
+Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `D2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
 ## Usage
 > The obligatory ~~useless~~basic example
@@ -82,21 +82,21 @@ I'm sure that was very helpful.
 
 ## Peripheral devices
 #### Getting started
-The great thing about the FT232H is being able to communicate with the plethora of GPIO and serial peripheral devices – which usually require the hardware interfaces found on low-power microcontrollers – with nothing but a USB cable directly from your PC. 
+The great thing about the FT232H is being able to communicate with the plethora of GPIO and serial peripheral devices – which usually require the hardware interfaces found on low-power microcontrollers – with nothing but a USB cable directly from your PC.
 
 However, the official device drivers required to control the FT232H are quite complex and require an understanding of microcontroller programming in C. This `ft232h` module greatly simplifies that programming interface, bridging many of those peripherals with the native Go ecosystem of common PCs.
 
-Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details. 
+Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details.
 
 You can create a new driver package under [`drv/`](drv) to encapsulate and reuse the definitions and procedures provided by the peripheral device, or you can simply interact with the FT232H interfaces directly from your application.
 
 To demonstrate this, a basic driver package [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) was created to drive an ILI9341 320x240 TFT LCD using the `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
 
-These methods alone were sufficient to implement the other half of the demonstration – an example application [`boing`](examples/spi/ili9341/boing) using the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver. 
+These methods alone were sufficient to implement the other half of the demonstration – an example application [`boing`](examples/spi/ili9341/boing) using the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver.
 - This application was a port of the [tinygo project](https://tinygo.org/)'s ILI9341 device driver example [`pyportal_boing`](https://github.com/tinygo-org/drivers/tree/master/examples/ili9341/pyportal_boing)
   - And this was in turn a port of Adafruit's [original Arduino demo](https://github.com/adafruit/Adafruit_ILI9341/tree/master/examples/pyportal_boing) released for their PyPortal
 
-So to get started, please review the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver and [`boing`](examples/spi/ili9341/boing) application for details on how this `ft232h` Go module is intended for use, which should also help you become familiar with the API and general architecture. 
+So to get started, please review the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver and [`boing`](examples/spi/ili9341/boing) application for details on how this `ft232h` Go module is intended for use, which should also help you become familiar with the API and general architecture.
 
 The design was intended to be as concise and general-purpose as possible, to not litter the namespace with subtleties, yet low-level enough to wield some _Real Power_.
 
@@ -111,7 +111,7 @@ In the mean-time, **_[hold on to your butts](https://www.youtube.com/watch?v=-W6
 </p>
 
 ## Drivers
-All communication with MPSSE-capable devices (including FT232H) is performed internally using FTDI's open-source driver [`libMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). That software however depends on FTDI's proprietary, binary-only driver [`FTD2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
+All communication with MPSSE-capable devices (including FT232H) is performed internally using FTDI's open-source driver [`libMPSSE`](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm). That software however depends on FTDI's proprietary, binary-only driver [`D2XX`](https://www.ftdichip.com/Drivers/D2XX.htm) (based on [`libusb`](https://github.com/libusb/libusb)), which is only available for certain host platforms.
 
 To make these library dependencies as transparent to the user as possible - so that no configuration, compilation, or installation is required - these libraries have been modified to support static linkage and have been [re-compiled into a single static library archive `libft232h.a`](#building-libft232h-optional) for each supported OS.
 
@@ -120,23 +120,23 @@ The Go module uses [`cgo`](https://golang.org/cmd/cgo/) to automatically link ag
 This all happens internally so that applications importing the `ft232h` Go module do not have to explicitly use or specify the native drivers to use. The module and native drivers are built directly into the resulting Go application.
 
 #### File structure for native drivers
-All of the C software related to the native drivers `libft232h`, `libMPSSE`, and `FTD2XX` is contained underneath [`native/`](native). This includes both the source code required for building and the compiled executable code used by the `ft232h` Go module at compile-time. The files are organized as follows:
+All of the C software related to the native drivers `libft232h`, `libMPSSE`, and `D2XX` is contained underneath [`native/`](native). This includes both the source code required for building and the compiled executable code used by the `ft232h` Go module at compile-time. The files are organized as follows:
 ```sh
 └── native/
     ├── lib/ # Pre-compiled libft232h.a libraries ...
     │   └── `${GOOS}_${GOARCH}`/ # .. separated by platform
-    ├── inc/  # libMPSSE and FTD2XX C header APIs needed by cgo
+    ├── inc/  # libMPSSE and D2XX C header APIs needed by cgo
     └── src/  # libMPSSE C source code, GNU Makefile
-        └── `${GOOS}_${GOARCH}`/ # build outputs and proprietary FTD2XX library
+        └── `${GOOS}_${GOARCH}`/ # build outputs and proprietary D2XX library
 ```
 
 #### Building `libft232h` (optional)
-The static library `libft232h.a` can be rebuilt if necessary to support other platforms or if any changes to `libMPSSE` or `FTD2XX` are required.
+The static library `libft232h.a` can be rebuilt if necessary to support other platforms or if any changes to `libMPSSE` or `D2XX` are required.
 
 Building the native drivers is done with a [GNU Makefile](native/src/Makefile). It performs the following tasks:
 1. Compiles the `libMPSSE` C source code into object files (.o)
-2. Extracts the object files from the proprietary `FTD2XX` static library
-3. Archives all of the `libMPSSE` and `FTD2XX` object files into a single static library `libft232h.a`
+2. Extracts the object files from the proprietary `D2XX` static library
+3. Archives all of the `libMPSSE` and `D2XX` object files into a single static library `libft232h.a`
 4. Copies the `libft232h.a` static library to the necessary `ft232h` Go module subdirectory based on target OS and architecture.
 
 Running `make` without any arguments will print the current build configuration and available `make` targets. You will need to define the `os` and `arch` variables at the top of the `Makefile` for your target system.
@@ -146,7 +146,7 @@ If you are cross-compiling, you will also want to define the `cross` variable ba
 Once configured, simply running `make clean && make reinstall` should be all you need for the `ft232h` Go module to use the rebuilt library.
 
 ###### Building `libft232h` for other platforms
-To support other platforms, you will need to make sure FTDI releases `FTD2XX` for that platform. You can view and download [official releases from **here**](https://www.ftdichip.com/Drivers/D2XX.htm). Once downloaded, you will want to copy the included static library to a subdirectory of `native/src/<$(os)>-$(arch)` and update the `$(ftd2xx-*)` version/path definitions as well as any necessary `CFLAGS` and `LDFLAGS` in the `Makefile`.
+To support other platforms, you will need to make sure FTDI releases `D2XX` for that platform. You can view and download [official releases from **here**](https://www.ftdichip.com/Drivers/D2XX.htm). Once downloaded, you will want to copy the included static library to a subdirectory of `native/src/<$(os)>-$(arch)` and update the `$(ftd2xx-*)` version/path definitions as well as any necessary `CFLAGS` and `LDFLAGS` in the `Makefile`.
 
 After compiling and installing the `libft232h.a` static library, you will also need to update the `ft232h` Go module source file [`native_bridge.go`](native_bridge.go). The `cgo` preamble at the top of this file needs to include a valid, build-constrained, `-L<path>` option in `LDFLAGS` pointing to the path of your target's compiled `libft232h.a` static library. See the other supported targets in that file for examples.
 
