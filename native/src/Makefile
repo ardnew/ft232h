@@ -14,30 +14,26 @@
 #                                                                              #
 ################################################################################
 
+platforms := linux-amd64 linux-386 linux-arm64 linux-arm darwin-amd64
 
-# -------------------------------------------------------- HOST CONFIGURATION --
+platform ?= linux-amd64
 
-# host OS and arch where you will be running your Go executables. if you are
-# cross-compiling for a different host, be sure to set the `cross` variable
-# further down below matching the prefix of your cross-compiler toolchain.
-os       = linux
-#os       = darwin
-arch     = amd64
-#arch     = 386
-#arch     = arm
-#arch     = arm64
-
+ifeq "" "$(strip $(filter $(platforms),$(platform)))"
+$(error unsupported platform "$(platform)" (see: "make help"))
+endif
 
 # --------------------------------------------------- TOOLCHAIN CONFIGURATION --
 
-cross   =
-#cross   = i686-linux-gnu-
-#cross   = arm-linux-gnueabihf-
-#cross   = aarch64-linux-gnu-
-objdump = $(cross)objdump
-CC      = $(cross)gcc
-AR      = $(cross)ar
-LD      = $(cross)ld
+# if you are cross-compiling for a non-native host, set the cross variable to
+# the prefix of your cross-compiler. a few examples are commented out below.
+cross   ?=
+#cross   ?= i686-linux-gnu-
+#cross   ?= arm-linux-gnueabihf-
+#cross   ?= aarch64-linux-gnu-
+objdump  = $(cross)objdump
+CC       = $(cross)gcc
+AR       = $(cross)ar
+LD       = $(cross)ld
 
 
 # ------------------------------------------------------ SOURCE CONFIGURATION --
@@ -46,33 +42,24 @@ LD      = $(cross)ld
 target = libft232h
 
 # version numbers for the libftd2xx proprietary library
-linux-ftd2xx-vers  = 1.4.8
-darwin-ftd2xx-vers = 1.4.16
-
-
-################################################################################
-#                                                                              #
-#       //-----------================####=================-----------\\        #
-#      |||                                                           |||       #
-#      ||| You should know what you're doing if you intend to make   |||       #
-#      ||| changes to any of the following sections. Otherwise, the  |||       #
-#      ||| basic configuration should suffice and you should now try |||       #
-#      ||| to build the library with `make build && make install`.   |||       #
-#      |||                                                           |||       #
-#       \\-----------================####=================-----------//        #
-#                                                                              #
-################################################################################
+linux-amd64-ftd2xx-vers  = 1.4.8
+linux-386-ftd2xx-vers    = 1.4.8
+linux-arm64-ftd2xx-vers  = 1.4.8
+linux-arm-ftd2xx-vers    = 1.4.8
+darwin-amd64-ftd2xx-vers = 1.4.16
 
 
 # ------------------------------------------------------- BUILD CONFIGURATION --
 
+# parse the OS name ("linux", "darwin", ...) from the platform specification
+os = $(word 1,$(subst -, ,$(platform)))
+
 # where to install the resulting libft232h build output. you shouldn't need to
 # change this for any reason. the Go code looks for the libft232h library in
 # this directory at compile-time (via cgo preamble in native_bridge.go).
-install  = ../lib/$(os)-$(arch)
+cgolib = ../lib/$(platform)
 
-# add library search paths for the libftd2xx driver, and include paths to the
-# libMPSSE API header files
+# add search paths for the libftd2xx header/lib and libMPSSE headers
 includes = $(addprefix -I,. ../inc)
 libpaths = $(addprefix -L,$(ftd2xx-root))
 libnames = $(addprefix -l,$(ftd2xx-name))
@@ -82,16 +69,16 @@ i2c-src = ftdi_i2c.c
 spi-src = ftdi_spi.c
 sources = ftdi_infra.c ftdi_mid.c $(i2c-src) $(spi-src)
 objname = obj
-objpath = $(os)-$(arch)/$(objname)
+objpath = $(platform)/$(objname)
 objects = $(patsubst %,$(objpath)/%,$(sources:.c=.o)) # expected object files
-outputs = $(os)-$(arch)/$(target).a
+outputs = $(platform)/$(target).a
 
 # paths and object files related to the libftd2xx proprietary library
 ftd2xx-name        = ftd2xx
-ftd2xx-root        = $(os)-$(arch)/lib$(ftd2xx-name)-$(os)-$(arch)-$($(os)-ftd2xx-vers)
+ftd2xx-root        = $(platform)/lib$(ftd2xx-name)/$($(platform)-ftd2xx-vers)
 ftd2xx-objpath     = $(ftd2xx-root)/$(objname)
 ftd2xx-lib         = $(ftd2xx-root)/lib$(ftd2xx-name).a
-ftd2xx-content    := $(filter %.o,$(shell $(AR) -t "$(ftd2xx-lib)")) # must stay sorted!
+ftd2xx-content     = $(filter %.o,$(shell $(AR) -t "$(ftd2xx-lib)")) # must stay sorted!
 ftd2xx-objects     = $(patsubst %,$(ftd2xx-objpath)/%,$(ftd2xx-content))
 
 # command used to generate build metadata info
@@ -118,44 +105,43 @@ buildtime := $(shell date)
 
 # -------------------------------------------------------------- MAKE RECIPES --
 
-.PHONY: default notarget available showconfig install reinstall build clean
+.PHONY: default help available showconfig build clean
 
-default: notarget available showconfig
+default: showconfig build
 
-notarget:
-	@printf "no target specified. usage:\n"
-	@printf "	$$ make <target>\n\n"
+help: available
+	@printf "to build for a specific target, set the 'platform' variable when calling make.\n"
+	@printf "to use a specific cross-compiler, also set the 'cross' variable.\n\n"
+	@printf "for example, to build for macOS using native toolchain:\n"
+	@printf "	$$ make platform=\"darwin-amd64\"\n\n"
+	@printf "or to build for Raspberry Pi model 4 using a GCC cross-compiler:\n"
+	@printf "	$$ make platform=\"linux-arm64\" cross=\"aarch64-linux-gnu-\"\n\n"
+	@printf "supported platforms:\n"
+	@printf "	%s\n" $(platforms)
 
 available:
 	@printf "available make targets:\n"
-	@printf "	showconfig	- prints the current build/install configuration\n"
-	@printf "	install		- copies %s to install path %s\n" "$(target)" "$(install)"
-	@printf "	reinstall	- compiles and copies %s to install path %s\n" "$(target)" "$(install)"
-	@printf "	build		- compiles the static library %s\n" "$(target).a"
-	@printf "	clean		- removes all compiled objects (.o, .a, .so, .dylib) and metadata\n\n"
+	@printf "	clean		- removes all compiled objects (.o, .a, .so, .dylib) and metadata\n"
+	@printf "	build		- compiles and installs the static library (default)\n\n"
 
 showconfig:
 	@printf "current build configuration:\n"
-	@printf "	OS		= %s\n" $(os)
-	@printf "	arch		= %s\n" $(arch)
-	@printf "	install path	= %s\n" $(install)
-	@printf "	build output	= %s\n" ./$(os)-$(arch)/
+	@printf "	platform	= %s\n" $(platform)
+	@printf "	build output	= %s\n" ./$(platform)/
+	@printf "	install path	= %s\n" $(cgolib)
 	@printf "	CC		= %s\n" "$(CC)"
 	@printf "	CFLAGS		= %s\n" "$(CFLAGS)"
-	@printf "	LDFLAGS		= %s\n" "$(LDFLAGS)"
+	@printf "	LDFLAGS		= %s\n\n" "$(LDFLAGS)"
 
-install: $(install)
-	cp $(outputs) "$^"
-	@printf "\n\t** install complete: %s/%s\n" "$^" $(outputs)
-
-reinstall: $(outputs) install
-
-build: $(outputs)
+build: $(showconfig) $(outputs) $(cgolib)
+	@printf "\n\t** build complete: %s (%s)\n\n" "$(target).a" "$(buildtime)" | tee "$(platform)/$(target).a.info"
+	@$($(os)-objdump) "$(platform)/$(target).a" >> "$(platform)/$(target).a.info"
+	@cp $(outputs) "$(cgolib)"
 
 clean:
-	rm -rf "$(objpath)" "$(ftd2xx-objpath)" "$(os)-$(arch)"/*.a "$(os)-$(arch)"/*.info
+	rm -rf "$(objpath)" "$(ftd2xx-objpath)" "$(platform)"/*.a "$(platform)"/*.info
 
-$(install):
+$(cgolib):
 	@test -d "$@" || mkdir -p "$@"
 
 $(objpath):
@@ -166,10 +152,8 @@ $(ftd2xx-objpath):
 	@# perform in subshell, because pushd/popd doesnt seem to have an effect
 	( cd $@; $(AR) -x ../"lib$(ftd2xx-name).a" $(ftd2xx-content) )
 
-$(os)-$(arch)/$(target).a: $(objpath) $(objects) $(ftd2xx-objpath)
+$(platform)/$(target).a: $(objpath) $(objects) $(ftd2xx-objpath)
 	$(AR) -rcs "$@" $(objects) $(ftd2xx-objects)
-	@printf "\n\t** build complete: %s (%s)\n\n" "$(target).a" "$(buildtime)" | tee "$@.info"
-	@$($(os)-objdump) "$@" >> "$@.info"
 
 $(objects): $(objpath)/%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
