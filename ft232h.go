@@ -26,7 +26,7 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Info: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %+v }",
+	return fmt.Sprintf("{ Index: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %+v }",
 		m.info, m.mode, m.I2C, m.SPI, m.GPIO)
 }
 
@@ -37,8 +37,9 @@ func NewFT232H() (*FT232H, error) {
 }
 
 // NewFT232HWithIndex attempts to open a connection with the MPSSE-capable USB
-// device enumerated at index, returning a non-nil error if unsuccessful.
-func NewFT232HWithIndex(index uint) (*FT232H, error) {
+// device enumerated at index (starting at 0), returning a non-nil error if
+// unsuccessful.
+func NewFT232HWithIndex(index int) (*FT232H, error) {
 	return NewFT232HWithMask(&OpenMask{Index: fmt.Sprintf("%d", index)})
 }
 
@@ -47,8 +48,8 @@ func NewFT232HWithIndex(index uint) (*FT232H, error) {
 // error if unsuccessful.
 func NewFT232HWithVIDPID(vid uint16, pid uint16) (*FT232H, error) {
 	return NewFT232HWithMask(&OpenMask{
-		VID: fmt.Sprintf("%04x", vid),
-		PID: fmt.Sprintf("%04x", pid),
+		VID: fmt.Sprintf("%d", vid),
+		PID: fmt.Sprintf("%d", pid),
 	})
 }
 
@@ -107,10 +108,9 @@ type OpenMask struct {
 // automatically.
 func parseUint32(s string) (uint32, bool) {
 	s = strings.ToLower(s)
-	// ParseUint requires a leading "0x". so if we have hex chars in s, prepend
-	// the prefix in case it wasn't provided.
+	// ParseUint requires a leading "0x" for base 16
 	if strings.ContainsAny(s, "abcdef") {
-		s = "0x" + strings.TrimPrefix(s, "0x") // prevents adding it twice
+		s = "0x" + strings.TrimPrefix(s, "0x") // always prefix (but not twice!)
 	}
 	// now parse according to Go convention
 	if u, err := strconv.ParseUint(s, 0, 32); nil != err {
@@ -149,17 +149,17 @@ func (m *FT232H) openDevice(mask *OpenMask) error {
 			break
 		}
 		if "" != mask.Index {
-			if u32Eq(uint32(d.index), mask.Index) {
+			if !u32Eq(uint32(d.index), mask.Index) {
 				continue
 			}
 		}
 		if "" != mask.VID {
-			if u32Eq(d.vid, mask.VID) {
+			if !u32Eq(d.vid, mask.VID) {
 				continue
 			}
 		}
 		if "" != mask.PID {
-			if u32Eq(d.pid, mask.PID) {
+			if !u32Eq(d.pid, mask.PID) {
 				continue
 			}
 		}
@@ -305,7 +305,7 @@ func (dev *deviceInfo) String() string {
 	return fmt.Sprintf("%d:{ Open = %t, HiSpeed = %t, Chip = \"%s\" (0x%02X), "+
 		"VID = 0x%04X, PID = 0x%04X, Location = %04X, "+
 		"Serial = \"%s\", Desc = \"%s\", Handle = %p }",
-		dev.index, dev.isOpen, dev.isHiSpeed, dev.chip, uint32(dev.chip),
+		dev.index+1, dev.isOpen, dev.isHiSpeed, dev.chip, uint32(dev.chip),
 		dev.vid, dev.pid, dev.locID, dev.serial, dev.desc, dev.handle)
 }
 
