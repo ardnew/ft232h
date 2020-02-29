@@ -28,8 +28,8 @@ endif
 # the prefix of your cross-compiler. a few examples are commented out below.
 cross   ?=
 #cross   ?= i686-linux-gnu-
-#cross   ?= arm-linux-gnueabihf-
 #cross   ?= aarch64-linux-gnu-
+#cross   ?= arm-linux-gnueabihf-
 objdump  = $(cross)objdump
 CC       = $(cross)gcc
 AR       = $(cross)ar
@@ -59,10 +59,8 @@ os = $(word 1,$(subst -, ,$(platform)))
 # this directory at compile-time (via cgo preamble in native_bridge.go).
 cgolib = ../lib/$(platform)
 
-# add search paths for the libftd2xx header/lib and libMPSSE headers
+# add include paths for the libMPSSE and D2XX headers
 includes = $(addprefix -I,. ../inc)
-libpaths = $(addprefix -L,$(ftd2xx-root))
-libnames = $(addprefix -l,$(ftd2xx-name))
 
 # all sources files that constitute libMPSSE
 i2c-src = ftdi_i2c.c
@@ -85,56 +83,71 @@ ftd2xx-objects     = $(patsubst %,$(ftd2xx-objpath)/%,$(ftd2xx-content))
 linux-objdump  = $(objdump) -fpt
 darwin-objdump = $(objdump) -macho -dylibs-used -archive-headers -private-header -t -indirect-symbols -g
 
-defines  = -DFTD2XX_STATIC
-#defines  += -DINFRA_DEBUG_ENABLE
-optimize = -Og
-debug    = -g
-warnings = -Wall
-cflags   = -std=gnu11
-ldflags  = -static
+defines        = -DFTD2XX_STATIC
+#defines        += -DINFRA_DEBUG_ENABLE
+optimize       = -Og
+debug          = -g
+warnings       = -Wall
+cflags         = -std=gnu11
 linux-cflags   = $(cflags) -fPIC
-linux-ldflags  = $(ldflags)
 darwin-cflags  = $(cflags)
-darwin-ldflags = $(ldflags)
 
-CFLAGS  = $(debug) $(optimize) $(warnings) $(defines) $(includes) $($(os)-cflags)
-LDFLAGS = $($(os)-ldflags) $(libpaths) $(libnames)
+CFLAGS = $(debug) $(optimize) $(warnings) $(defines) $(includes) $($(os)-cflags)
 
-buildtime := $(shell date)
+buildtime := $(shell date +"%Y-%b-%d %T %Z")
+marg := 4
+cols := 12
 
 
 # -------------------------------------------------------------- MAKE RECIPES --
 
 .PHONY: default help available showconfig build clean
 
-default: showconfig build
+default: build
 
-help: available
-	@printf "to build for a specific target, set the 'platform' variable when calling make.\n"
-	@printf "to use a specific cross-compiler, also set the 'cross' variable.\n\n"
-	@printf "for example, to build for macOS using native toolchain:\n"
-	@printf "	$$ make platform=\"darwin-amd64\"\n\n"
-	@printf "or to build for Raspberry Pi model 4 using a GCC cross-compiler:\n"
-	@printf "	$$ make platform=\"linux-arm64\" cross=\"aarch64-linux-gnu-\"\n\n"
-	@printf "supported platforms:\n"
-	@printf "	%s\n" $(platforms)
+help: showconfig available
+	@printf -- "\n"
+	@printf -- "--------------------------------------------------------------------------------\n"
+	@printf -- "\n"
+	@printf -- "to build for a specific target, set the 'platform' variable when calling make.\n"
+	@printf -- "to use a specific cross-compiler, also set the 'cross' variable.\n"
+	@printf -- "  - for example, to build for macOS using native toolchain:\n"
+	@printf -- "\n"
+	@printf -- "	$$ make platform=\"darwin-amd64\"\n"
+	@printf -- "\n"
+	@printf -- "  - or to build for Raspberry Pi model 4 using a GCC cross-compiler:\n"
+	@printf -- "	$$ make platform=\"linux-arm64\" cross=\"aarch64-linux-gnu-\"\n"
+	@printf -- "\n"
+	@printf -- "  - to force a fresh rebuild, use both targets 'clean' & 'build' explicitly:\n"
+	@printf -- "	$$ make clean build\n"
+	@printf -- "\n"
+	@printf -- "supported platforms:\n"
+	@printf -- "%*s%-*s\n" $(patsubst %,$(marg) " " $(cols) %,$(platforms))
+	@printf -- "\n"
 
 available:
-	@printf "available make targets:\n"
-	@printf "	clean		- removes all compiled objects (.o, .a, .so, .dylib) and metadata\n"
-	@printf "	build		- compiles and installs the static library (default)\n\n"
+	@printf -- "\n"
+	@printf -- "--------------------------------------------------------------------------------\n"
+	@printf -- "\n"
+	@printf -- "available make targets:\n"
+	@printf -- "%*s %-*s - removes all compiled objects (.o, .a, .so, .dylib) and metadata\n" $(marg) " " $(cols) "clean"
+	@printf -- "%*s %-*s - compiles and installs the static library (default)\n"              $(marg) " " $(cols) "build"
+	@printf -- "\n"
 
 showconfig:
-	@printf "current build configuration:\n"
-	@printf "	platform	= %s\n" $(platform)
-	@printf "	build output	= %s\n" ./$(platform)/
-	@printf "	install path	= %s\n" $(cgolib)
-	@printf "	CC		= %s\n" "$(CC)"
-	@printf "	CFLAGS		= %s\n" "$(CFLAGS)"
-	@printf "	LDFLAGS		= %s\n\n" "$(LDFLAGS)"
+	@printf -- "\n"
+	@printf -- "--------------------------------------------------------------------------------\n"
+	@printf -- "\n"
+	@printf -- "current build configuration:\n"
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "platform" $(platform)
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "output" ./$(platform)/
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "cgo path" $(cgolib)
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "CC" "$(CC)"
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "CFLAGS" "$(CFLAGS)"
+	@printf -- "\n"
 
-build: $(showconfig) $(outputs) $(cgolib)
-	@printf "\n\t** build complete: %s (%s)\n\n" "$(target).a" "$(buildtime)" | tee "$(platform)/$(target).a.info"
+build: showconfig $(outputs) $(cgolib)
+	@printf -- "\n\t** BUILD SUCCESS | %s [%s] | %s **\n\n" "$(target).a" "$(platform)" "$(buildtime)" | tee "$(platform)/$(target).a.info"
 	@$($(os)-objdump) "$(platform)/$(target).a" >> "$(platform)/$(target).a.info"
 	@cp $(outputs) "$(cgolib)"
 
