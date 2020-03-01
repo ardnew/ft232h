@@ -76,6 +76,14 @@ func (c *spiConfig) SPIConfig() *SPIConfig {
 
 // SPIOption holds all of the dynamic configuration settings that can be changed
 // while an SPI interface is open.
+//
+// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
+// then the MPSSE engine automatically handles CS assertion before and after
+// transfer, depending on the given flags start and stop. If it is a CBUS pin,
+// then the GPIO pin is automatically set and cleared depending on the given
+// flags start and stop. In both cases, the current value of the ActiveLow flag
+// determines if the CS line driven LOW (ActiveLow true, DEFAULT) or HIGH
+// (ActiveLow false) when asserting and then de-asserting.
 type SPIOption struct {
 	CS        Pin  // CS pin to assert when writing (can be DPin or CPin (GPIO))
 	ActiveLow bool // CS asserted "active" by driving pin LOW or HIGH
@@ -328,20 +336,12 @@ func (spi *SPI) Close() error {
 	return spi.device.Close()
 }
 
-// Write writes the given data to the SPI interface, optionally asserting the CS
-// line before writing and/or de-asserting the CS line after writing, returning
-// the number of bytes successfully written and a non-nil error if there was an
-// error.
+// Write writes the given byte slice data to the SPI interface.
 // There is no maximum length for the data slice.
-//
-// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
-// then the MPSSE engine automatically handles CS assertion before and after
-// writing, depending on the given flags start and stop. If it is a CBUS pin,
-// then the GPIO pin is automatically set and cleared depending on the given
-// flags start and stop. In both cases, the current value of the ActiveLow flag
-// in the SPI configuration options determines if the CS line driven LOW
-// (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
-// de-asserting.
+// If start is true, the CS line is asserted before transfer.
+// If stop is true, the CS line is de-asserted after transfer.
+// Returns the slice of bytes successfully written and a non-nil error if there
+// was an error.
 func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint, error) {
 
 	cs := spi.config.chipSelect
@@ -370,15 +370,9 @@ func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint, error) {
 	return _SPI_Write(spi, data, opt)
 }
 
-// WriteTo writes the given data using the given CS pin to the SPI interface,
-// optionally asserting the CS line before writing and/or de-asserting the CS
-// line after writing, returning the number of bytes successfully written and a
-// non-nil error if there was an error.
-// There is no maximum length for the data slice.
+// WriteTo returns the result of Write after configuring the active CS line.
 // If the given CS pin is not the same as the currently configured CS pin, the
 // CS configuration is changed and persists after writing.
-// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
-// Write for details.
 func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint, error) {
 
 	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
@@ -390,20 +384,12 @@ func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint, erro
 	return spi.Write(data, start, stop)
 }
 
-// Read reads the given count number of bytes from the SPI interface, optionally
-// asserting the CS line before reading and/or de-asserting the CS line after
-// reading, returning the slice of bytes successfully read and a non-nil error
-// if there was an error.
+// Read reads the given count number of bytes from the SPI interface.
 // There is no maximum length for the number of bytes to read.
-//
-// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
-// then the MPSSE engine automatically handles CS assertion before and after
-// reading, depending on the given flags start and stop. If it is a CBUS pin,
-// then the GPIO pin is automatically set and cleared depending on the given
-// flags start and stop. In both cases, the current value of the ActiveLow flag
-// in the SPI configuration options determines if the CS line driven LOW
-// (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
-// de-asserting.
+// If start is true, the CS line is asserted before transfer.
+// If stop is true, the CS line is de-asserted after transfer.
+// Returns the slice of bytes successfully read and a non-nil error if there was
+// an error.
 func (spi *SPI) Read(count uint, start bool, stop bool) ([]uint8, error) {
 
 	cs := spi.config.chipSelect
@@ -432,15 +418,9 @@ func (spi *SPI) Read(count uint, start bool, stop bool) ([]uint8, error) {
 	return _SPI_Read(spi, count, opt)
 }
 
-// ReadFrom reads the given count number of bytes using the given CS pin from
-// the SPI interface, optionally asserting the CS line before reading and/or
-// de-asserting the CS line after reading, returning the slice of bytes
-// successfully read and a non-nil error if there was an error.
-// There is no maximum length for the number of bytes to read.
+// ReadFrom returns the result of Read after configuring the active CS line.
 // If the given CS pin is not the same as the currently configured CS pin, the
 // CS configuration is changed and persists after reading.
-// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
-// Read for details.
 func (spi *SPI) ReadFrom(cs Pin, count uint, start bool, stop bool) ([]uint8, error) {
 
 	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
@@ -452,22 +432,14 @@ func (spi *SPI) ReadFrom(cs Pin, count uint, start bool, stop bool) ([]uint8, er
 	return spi.Read(count, start, stop)
 }
 
-// Swap simultaneously reads and writes the given data on the SPI interface,
-// optionally asserting the CS line before starting and/or de-asserting the CS
-// line after finishing, returning the slice of bytes successfully read and a
-// non-nil error if there was an error.
+// Swap simultaneously reads and writes data on the SPI interface.
 // Simultaneous read+write means that "one bit is clocked in and one bit is
 // clocked out during every clock cycle."
 // There is no maximum length for the number of bytes to swap.
-//
-// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
-// then the MPSSE engine automatically handles CS assertion before and after
-// swapping, depending on the given flags start and stop. If it is a CBUS pin,
-// then the GPIO pin is automatically set and cleared depending on the given
-// flags start and stop. In both cases, the current value of the ActiveLow flag
-// in the SPI configuration options determines if the CS line driven LOW
-// (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
-// de-asserting.
+// If start is true, the CS line is asserted before transfer.
+// If stop is true, the CS line is de-asserted after transfer.
+// Returns the slice of bytes successfully read and a non-nil error if there was
+// an error.
 func (spi *SPI) Swap(data []uint8, start bool, stop bool) ([]uint8, error) {
 
 	cs := spi.config.chipSelect
@@ -496,17 +468,9 @@ func (spi *SPI) Swap(data []uint8, start bool, stop bool) ([]uint8, error) {
 	return _SPI_Swap(spi, data, opt)
 }
 
-// Swap simultaneously reads and writes the given data using the given CS pin on
-// the SPI interface, optionally asserting the CS line before starting and/or
-// de-asserting the CS line after finishing, returning the slice of bytes
-// successfully read and a non-nil error if there was an error.
-// Simultaneous read+write means that "one bit is clocked in and one bit is
-// clocked out during every clock cycle."
-// There is no maximum length for the number of bytes to swap.
+// SwapWith returns the result of Swap after configuring the active CS line.
 // If the given CS pin is not the same as the currently configured CS pin, the
 // CS configuration is changed and persists after swapping.
-// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
-// Swap for details.
 func (spi *SPI) SwapWith(cs Pin, data []uint8, start bool, stop bool) ([]uint8, error) {
 
 	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
