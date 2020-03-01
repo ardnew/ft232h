@@ -100,24 +100,45 @@ type OpenMask struct {
 }
 
 // parseUint32 attempts to convert a given string to a 32-bit unsigned integer,
-// returning zero and false if the string is invalid.
+// returning zero and false if the string is empty, negative, or otherwise
+// invalid.
 // The string can be expressed in various bases, following the convention of
 // Go's strconv.ParseUint with base = 0, bitSize = 32.
 // The only exception is when the string contains hexadecimal chars and doesn't
 // begin with the required prefix "0x". In this case, the "0x" prefix is added
 // automatically.
 func parseUint32(s string) (uint32, bool) {
-	s = strings.ToLower(s)
+	s = strings.TrimSpace(strings.ToLower(s))
+	if s == "" {
+		return 0, false
+	}
 	// ParseUint requires a leading "0x" for base 16
-	if strings.ContainsAny(s, "abcdef") {
+	if strings.ContainsAny(s, "abcdef") && !strings.HasPrefix(s, "0b") {
 		s = "0x" + strings.TrimPrefix(s, "0x") // always prefix (but not twice!)
 	}
 	// now parse according to Go convention
-	if u, err := strconv.ParseUint(s, 0, 32); nil != err {
+	i, err := strconv.ParseInt(s, 0, 64)
+	if nil != err || i < 0 || i > math.MaxUint32 {
 		return 0, false
 	} else {
-		return uint32(u), true
+		return uint32(i), true
 	}
+}
+
+// popcount returns the number of bits set in the first n bits (LSB) of u for n
+// less than or equal to 64.
+// returns 0 if n is less than 1.
+func popcount(u uint64, n int) int {
+	if n > 64 {
+		n = 64
+	}
+	c := 0
+	for i := 0; i < n; i++ {
+		if 1 == (u>>i)&1 {
+			c++
+		}
+	}
+	return c
 }
 
 // openDevice attempts to open the device matching the given mask, returning
@@ -202,10 +223,10 @@ func (m *FT232H) Close() error {
 type Pin interface {
 	IsMPSSE() bool     // true if DPin (port "D"), false if CPin (GPIO/port "C")
 	Mask() uint8       // the bitmask used to address the pin, equal to 1<<Pos()
-	Pos() uint8        // the ordinal pin number (0-7), equal to log2(Mask())
+	Pos() int          // the ordinal pin number (0-7), equal to log2(Mask())
 	String() string    // the string representation "D#" or "C#", with # = Pos()
-	Valid() bool       // true IFF bitmask is non-zero
-	Equals(q Pin) bool // true IFF p and q are have equal port and bitmask
+	Valid() bool       // true IFF bitmask has exactly one bit set
+	Equals(q Pin) bool // true IFF p and q have equal port and bitmask
 }
 
 // IsMPSSE is true for pins on FT232H port "D".
@@ -221,10 +242,10 @@ func (p DPin) Mask() uint8 { return uint8(p) }
 func (p CPin) Mask() uint8 { return uint8(p) }
 
 // Pos is the ordinal pin number (0-7) on port "D".
-func (p DPin) Pos() uint8 { return uint8(math.Log2(float64(p))) }
+func (p DPin) Pos() int { return int(math.Log2(float64(p))) }
 
 // Pos is the ordinal pin number (0-7) on port "C".
-func (p CPin) Pos() uint8 { return uint8(math.Log2(float64(p))) }
+func (p CPin) Pos() int { return int(math.Log2(float64(p))) }
 
 // String is the string representation "D#" of the pin, with # equal to Pos.
 func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
@@ -232,11 +253,11 @@ func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
 // String is the string representation "C#" of the pin, with # equal to Pos.
 func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
 
-// Valid is true if the pin bitmask is non-zero, otherwise false.
-func (p DPin) Valid() bool { return 0 != uint8(p) }
+// Valid is true if the pin bitmask has exactly one bit set, otherwise false.
+func (p DPin) Valid() bool { return 1 == popcount(uint64(p), NumDPins) }
 
-// Valid is true if the pin bitmask is non-zero, otherwise false.
-func (p CPin) Valid() bool { return 0 != uint8(p) }
+// Valid is true if the pin bitmask has exactly one bit set, otherwise false.
+func (p CPin) Valid() bool { return 1 == popcount(uint64(p), NumCPins) }
 
 // Equals is true if the given pin is on port "D" and has the same bitmask,
 // otherwise false.

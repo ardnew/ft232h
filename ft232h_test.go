@@ -209,3 +209,103 @@ func TestNewFT232HWithDesc(t *testing.T) {
 			})
 	}
 }
+
+func TestParseUint32(t *testing.T) {
+
+	for _, test := range []struct {
+		name string
+		str  string
+		exp  uint32
+		ok   bool // true if expecting parse to succeed
+	}{
+		{name: "", str: "0b10101010101010101010101010101010", exp: 0b10101010101010101010101010101010, ok: true},
+		{name: "", str: "025252525252", exp: 025252525252, ok: true},
+		{name: "", str: "0o25252525252", exp: 0o25252525252, ok: true},
+		{name: "", str: "2863311530", exp: 2863311530, ok: true},
+		{name: "", str: "0xAaAaAaAa", exp: 0xAaAaAaAa, ok: true},
+		{name: "", str: "AaAaAaAa", exp: 0xAaAaAaAa, ok: true},
+		{name: "", str: "0b01010101010101010101010101010101", exp: 0b01010101010101010101010101010101, ok: true},
+		{name: "", str: "012525252525", exp: 012525252525, ok: true},
+		{name: "", str: "0o12525252525", exp: 0o12525252525, ok: true},
+		{name: "", str: "1431655765", exp: 1431655765, ok: true},
+		{name: "", str: "0X55555555", exp: 0x55555555, ok: true},
+		{name: "", str: "55555555", exp: 55555555, ok: true},
+		{name: "", str: "-0b10101010", exp: 0, ok: false},
+		{name: "", str: "-02525", exp: 0, ok: false},
+		{name: "", str: "-0o2525", exp: 0, ok: false},
+		{name: "", str: "-170", exp: 0, ok: false},
+		{name: "", str: "-0xAa", exp: 0, ok: false},
+		{name: "", str: "-Aa", exp: 0, ok: false},
+		{name: "", str: "4294967296", exp: 0, ok: false},
+	} {
+		t.Run(fmt.Sprintf("%s=\"%s\"", test.name, test.str),
+			func(s *testing.T) {
+				act, ok := parseUint32(test.str)
+				if test.ok {
+					if ok {
+						if act == test.exp { // success
+							// empty
+						} else { // fail
+							s.Fatalf("parsed uint32={%d} expected={%d} from string=\"%s\"",
+								act, test.exp, test.str)
+						}
+					} else { // fail
+						s.Fatalf("could not parse uint32 from string=\"%s\"", test.str)
+					}
+				} else {
+					if ok { // fail
+						s.Fatalf("parsed uint32={%d} from string=\"%s\"", act, test.str)
+					} else { // success
+						// empty
+					}
+				}
+			})
+	}
+}
+
+func TestPin(t *testing.T) {
+
+	for i := -1; i <= 8; i++ {
+
+		ok := i > -1 && i < 8
+
+		d := D(i)
+		c := C(i)
+
+		if ok {
+
+			if !d.Valid() {
+				t.Fatalf("expected D(%d) to be valid", i)
+			}
+			if !c.Valid() {
+				t.Fatalf("expected C(%d) to be valid", i)
+			}
+
+			if (1<<i) != d.Mask() {
+				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<i)
+			}
+			if (1<<i) != c.Mask() {
+				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<i)
+			}
+
+			if i != d.Pos() {
+				t.Fatalf("D(%d) pos={%d}, expected={%d}", i, d.Pos(), i)
+			}
+			if i != c.Pos() {
+				t.Fatalf("C(%d) pos={%d}, expected={%d}", i, c.Pos(), i)
+			}
+
+			if d.Equals(c) || c.Equals(d) {
+				t.Fatalf("D(%d) equals C(%d)", i, i)
+			}
+
+		} else {
+			if d.Valid() {
+				t.Fatalf("expected D(%d) to be invalid", i)
+			}
+			if c.Valid() {
+				t.Fatalf("expected C(%d) to be invalid", i)
+			}
+		}
+	}
+}

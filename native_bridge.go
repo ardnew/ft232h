@@ -316,34 +316,96 @@ func _SPI_Change(spi *SPI) error {
 	return nil
 }
 
-// _SPI_Write performs an SPI write using the given open SPI interface and slice
-// of uint8 data and transfer options using the libMPSSE driver, returning a
-// non-nil error if unsuccessful.
+// _SPI_Write performs an SPI write using the libMPSSE driver with the given
+// open SPI interface, slice of uint8 data to send, and transfer options,
+// returning the total number of bytes successfully transferred, and a non-nil
+// error if there was an error.
 // If the given data slice length is greater than UINT16_MAX (65536), multiple
 // write requests are performed with the libMPSSE driver.
-func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint32, error) {
+func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint, error) {
 
 	// note that MPSSE has a limitation on the size of SPI transfers, since the
 	// packet length has to fit into 16 bits, so the max transfer size is 65536.
 	// we break up the buffer here to transmit as much as possible at once.
 	const MaxTransferBytes = 65536
-	var (
-		total uint32
-		sent  C.uint32
-	)
+	var sent C.uint32
 
-	dataLen := len(data)
-	for beg := 0; beg < dataLen; beg += MaxTransferBytes {
+	dataLen := uint(len(data))
+
+	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
 		end := beg + MaxTransferBytes
 		if end > dataLen {
 			end = dataLen
 		}
 		stat := Status(C.SPI_Write(C.PVOID(spi.device.info.handle),
 			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
-		total += uint32(sent)
 		if !stat.OK() {
-			return total, stat
+			return beg + uint(sent), stat
 		}
 	}
-	return total, nil
+	return uint(dataLen), nil
+}
+
+// _SPI_Read performs an SPI read using the libMPSSE driver with the given open
+// SPI interface, number of bytes to read, and transfer options, returning a
+// slice of uint8 containing the bytes successfully read, and a non-nil error if
+// there was an error.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// read requests are performed with the libMPSSE driver.
+func _SPI_Read(spi *SPI, count uint, opt spiXferOption) ([]uint8, error) {
+
+	// note that MPSSE has a limitation on the size of SPI transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var sent C.uint32
+
+	data := make([]uint8, count)
+
+	for beg := uint(0); beg < count; beg += MaxTransferBytes {
+		end := beg + MaxTransferBytes
+		if end > count {
+			end = count
+		}
+		stat := Status(C.SPI_Read(C.PVOID(spi.device.info.handle),
+			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
+		if !stat.OK() {
+			return data[:beg+uint(sent)], stat
+		}
+	}
+	return data, nil
+}
+
+// _SPI_Swap performs a simultaneous SPI read+write using the libMPSSE driver
+// with the given open SPI interface, slice of uint8 data to send, and transfer
+// options, returning a slice of uint8 containing the bytes successfully read,
+// and a non-nil error if there was an error.
+// Simultaneous read+write in libMPSSE means that "one bit is clocked in and one
+// bit is clocked out during every clock cycle."
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// readwrite requests are performed with the libMPSSE driver.
+func _SPI_Swap(spi *SPI, send []uint8, opt spiXferOption) ([]uint8, error) {
+
+	// note that MPSSE has a limitation on the size of SPI transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var swap C.uint32
+
+	dataLen := uint(len(send))
+	recv := make([]uint8, dataLen)
+
+	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
+		end := beg + MaxTransferBytes
+		if end > dataLen {
+			end = dataLen
+		}
+		stat := Status(C.SPI_ReadWrite(C.PVOID(spi.device.info.handle),
+			(*C.uint8)(&recv[beg]), (*C.uint8)(&send[beg]),
+			C.uint32(end-beg), &swap, C.uint32(opt)))
+		if !stat.OK() {
+			return recv[:beg+uint(swap)], stat
+		}
+	}
+	return recv, nil
 }

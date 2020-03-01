@@ -26,26 +26,28 @@ func GPIOConfigDefault() *GPIOConfig {
 // Init resets all GPIO pin directions and values using the most recently read
 // or written configuration, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Init() error {
-	return gpio.Write(gpio.config.dir, gpio.config.val)
+	return gpio.Config(gpio.config)
 }
 
 // Config configures all GPIO pin directions and values to the settings defined
 // in the given cfg, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Config(cfg *GPIOConfig) error {
-	return gpio.Write(cfg.dir, cfg.val)
+	gpio.config.dir = cfg.dir
+	return gpio.Write(cfg.val)
 }
 
-// Write configures all GPIO pin directions and values using the given dir and
-// val bitmasks, returning a non-nil error if unsuccessful.
-func (gpio *GPIO) Write(dir uint8, val uint8) error {
+// Write sets the value of all output pins at once using the given bitmask val,
+// returning a non-nil error if unsuccessful.
+func (gpio *GPIO) Write(val uint8) error {
 
+	dir := gpio.config.dir
 	val &= dir // set only the pins configured as OUTPUT
 
-	if err := _FT_WriteGPIO(gpio, dir, val); nil != err {
+	err := _FT_WriteGPIO(gpio, dir, val)
+	if nil != err {
 		return err
 	}
 
-	gpio.config.dir = dir
 	gpio.config.val = val
 
 	return nil
@@ -82,7 +84,7 @@ func (gpio *GPIO) Set(pin CPin, val bool) error {
 		set &= ^uint8(pin)
 	}
 
-	return gpio.Write(dir, set)
+	return gpio.Config(&GPIOConfig{dir, set})
 }
 
 // Get reads the value of the given pin, returning a non-nil error if

@@ -19,15 +19,6 @@ type SPIConfig struct {
 	Latency byte   // 1-255 USB HiSpeed, 2-255 USB FullSpeed
 }
 
-// NewSPIConfig constructs an SPIConfig struct with the given configuration.
-func NewSPIConfig(cs Pin, activeLow bool, mode byte, clock uint32, latency byte) *SPIConfig {
-	return &SPIConfig{
-		SPIOption: NewSPIOption(cs, activeLow, mode),
-		Clock:     clock,
-		Latency:   latency,
-	}
-}
-
 // SPIConfigDefault returns the default configuration settings for an SPI
 // interface.
 func SPIConfigDefault() *SPIConfig {
@@ -42,8 +33,8 @@ func (spi *SPI) GetConfig() *SPIConfig {
 // Constants related to SPI interface initialization.
 const (
 	SPIClockMaximum   uint32 = 30000000
-	SPIClockDefault   uint32 = 12000000
-	SPILatencyDefault byte   = 16
+	SPIClockDefault   uint32 = SPIClockMaximum
+	SPILatencyDefault byte   = 16 // used in FTDI example docs
 )
 
 // spiConfig holds all of the configuration settings for an SPI channel stored
@@ -73,9 +64,13 @@ func spiConfigDefault() *spiConfig {
 // the private configuration field of an instance of SPI.
 func (c *spiConfig) SPIConfig() *SPIConfig {
 	return &SPIConfig{
-		SPIOption: NewSPIOption(c.options.cs(), c.options.activeLow(), c.options.mode()),
-		Clock:     c.clockRate,
-		Latency:   c.latency,
+		SPIOption: &SPIOption{
+			CS:        c.options.cs(),
+			ActiveLow: c.options.activeLow(),
+			Mode:      c.options.mode(),
+		},
+		Clock:   c.clockRate,
+		Latency: c.latency,
 	}
 }
 
@@ -85,15 +80,6 @@ type SPIOption struct {
 	CS        Pin  // CS pin to assert when writing (can be DPin or CPin (GPIO))
 	ActiveLow bool // CS asserted "active" by driving pin LOW or HIGH
 	Mode      byte // SPI operating mode (mode 0 and 2 support only)
-}
-
-// NewSPIOption constructs an SPIOption struct with the given options.
-func NewSPIOption(cs Pin, activeLow bool, mode byte) *SPIOption {
-	return &SPIOption{
-		CS:        cs,
-		ActiveLow: activeLow,
-		Mode:      mode,
-	}
 }
 
 // spiOption stores the various SPI configuration options as a 32-bit bitmap.
@@ -343,7 +329,9 @@ func (spi *SPI) Close() error {
 }
 
 // Write writes the given data to the SPI interface, optionally asserting the CS
-// line before writing and/or de-asserting the CS line after writing.
+// line before writing and/or de-asserting the CS line after writing, returning
+// the number of bytes successfully written and a non-nil error if there was an
+// error.
 // There is no maximum length for the data slice.
 //
 // The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
@@ -354,7 +342,7 @@ func (spi *SPI) Close() error {
 // in the SPI configuration options determines if the CS line driven LOW
 // (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
 // de-asserting.
-func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
+func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint, error) {
 
 	cs := spi.config.chipSelect
 	opt := spiXferDefault
@@ -384,13 +372,14 @@ func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint32, error) {
 
 // WriteTo writes the given data using the given CS pin to the SPI interface,
 // optionally asserting the CS line before writing and/or de-asserting the CS
-// line after writing.
+// line after writing, returning the number of bytes successfully written and a
+// non-nil error if there was an error.
 // There is no maximum length for the data slice.
 // If the given CS pin is not the same as the currently configured CS pin, the
 // CS configuration is changed and persists after writing.
 // The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
 // Write for details.
-func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint32, error) {
+func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint, error) {
 
 	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
 		// change if we are writing to a slave different than currently configured
@@ -399,4 +388,132 @@ func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint32, er
 		}
 	}
 	return spi.Write(data, start, stop)
+}
+
+// Read reads the given count number of bytes from the SPI interface, optionally
+// asserting the CS line before reading and/or de-asserting the CS line after
+// reading, returning the slice of bytes successfully read and a non-nil error
+// if there was an error.
+// There is no maximum length for the number of bytes to read.
+//
+// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
+// then the MPSSE engine automatically handles CS assertion before and after
+// reading, depending on the given flags start and stop. If it is a CBUS pin,
+// then the GPIO pin is automatically set and cleared depending on the given
+// flags start and stop. In both cases, the current value of the ActiveLow flag
+// in the SPI configuration options determines if the CS line driven LOW
+// (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
+// de-asserting.
+func (spi *SPI) Read(count uint, start bool, stop bool) ([]uint8, error) {
+
+	cs := spi.config.chipSelect
+	opt := spiXferDefault
+	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
+
+	if start {
+		if cs.IsMPSSE() {
+			opt |= spiCSAssert
+		} else {
+			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
+				return nil, err
+			}
+		}
+	}
+
+	if stop {
+		if cs.IsMPSSE() {
+			opt |= spiCSDeAssert
+		} else {
+			// deassert on return
+			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
+		}
+	}
+
+	return _SPI_Read(spi, count, opt)
+}
+
+// ReadFrom reads the given count number of bytes using the given CS pin from
+// the SPI interface, optionally asserting the CS line before reading and/or
+// de-asserting the CS line after reading, returning the slice of bytes
+// successfully read and a non-nil error if there was an error.
+// There is no maximum length for the number of bytes to read.
+// If the given CS pin is not the same as the currently configured CS pin, the
+// CS configuration is changed and persists after reading.
+// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
+// Read for details.
+func (spi *SPI) ReadFrom(cs Pin, count uint, start bool, stop bool) ([]uint8, error) {
+
+	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
+		// change if we are writing to a slave different than currently configured
+		if err := spi.Change(cs); nil != err {
+			return nil, err
+		}
+	}
+	return spi.Read(count, start, stop)
+}
+
+// Swap simultaneously reads and writes the given data on the SPI interface,
+// optionally asserting the CS line before starting and/or de-asserting the CS
+// line after finishing, returning the slice of bytes successfully read and a
+// non-nil error if there was an error.
+// Simultaneous read+write means that "one bit is clocked in and one bit is
+// clocked out during every clock cycle."
+// There is no maximum length for the number of bytes to swap.
+//
+// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
+// then the MPSSE engine automatically handles CS assertion before and after
+// swapping, depending on the given flags start and stop. If it is a CBUS pin,
+// then the GPIO pin is automatically set and cleared depending on the given
+// flags start and stop. In both cases, the current value of the ActiveLow flag
+// in the SPI configuration options determines if the CS line driven LOW
+// (ActiveLow true, DEFAULT) or HIGH (ActiveLow false) when asserting and then
+// de-asserting.
+func (spi *SPI) Swap(data []uint8, start bool, stop bool) ([]uint8, error) {
+
+	cs := spi.config.chipSelect
+	opt := spiXferDefault
+	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
+
+	if start {
+		if cs.IsMPSSE() {
+			opt |= spiCSAssert
+		} else {
+			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
+				return nil, err
+			}
+		}
+	}
+
+	if stop {
+		if cs.IsMPSSE() {
+			opt |= spiCSDeAssert
+		} else {
+			// deassert on return
+			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
+		}
+	}
+
+	return _SPI_Swap(spi, data, opt)
+}
+
+// Swap simultaneously reads and writes the given data using the given CS pin on
+// the SPI interface, optionally asserting the CS line before starting and/or
+// de-asserting the CS line after finishing, returning the slice of bytes
+// successfully read and a non-nil error if there was an error.
+// Simultaneous read+write means that "one bit is clocked in and one bit is
+// clocked out during every clock cycle."
+// There is no maximum length for the number of bytes to swap.
+// If the given CS pin is not the same as the currently configured CS pin, the
+// CS configuration is changed and persists after swapping.
+// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
+// Swap for details.
+func (spi *SPI) SwapWith(cs Pin, data []uint8, start bool, stop bool) ([]uint8, error) {
+
+	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
+		// change if we are writing to a slave different than currently configured
+		if err := spi.Change(cs); nil != err {
+			return nil, err
+		}
+	}
+	return spi.Swap(data, start, stop)
 }
