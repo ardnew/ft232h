@@ -10,16 +10,16 @@ type GPIO struct {
 
 // GPIOConfig stores the most-recently read/written pin levels and directions.
 type GPIOConfig struct {
-	dir uint8
-	val uint8
+	Dir uint8
+	Val uint8
 }
 
 // GPIOConfigDefault returns the default pin levels and directions for the GPIO
 // interface. All pins are configured as outputs at logic level LOW by default.
 func GPIOConfigDefault() *GPIOConfig {
 	return &GPIOConfig{
-		dir: 0xFF, // each bit set, all pins OUTPUT by default
-		val: 0x00, // each bit clear, all pins LOW by default
+		Dir: 0xFF, // each bit set, all pins OUTPUT by default
+		Val: 0x00, // each bit clear, all pins LOW by default
 	}
 }
 
@@ -32,15 +32,15 @@ func (gpio *GPIO) Init() error {
 // Config configures all GPIO pin directions and values to the settings defined
 // in the given cfg, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Config(cfg *GPIOConfig) error {
-	gpio.config.dir = cfg.dir
-	return gpio.Write(cfg.val)
+	gpio.config.Dir = cfg.Dir
+	return gpio.Write(cfg.Val)
 }
 
 // Write sets the value of all output pins at once using the given bitmask val,
 // returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Write(val uint8) error {
 
-	dir := gpio.config.dir
+	dir := gpio.config.Dir
 	val &= dir // set only the pins configured as OUTPUT
 
 	err := _FT_WriteGPIO(gpio, dir, val)
@@ -48,7 +48,7 @@ func (gpio *GPIO) Write(val uint8) error {
 		return err
 	}
 
-	gpio.config.val = val
+	gpio.config.Val = val
 
 	return nil
 }
@@ -62,7 +62,7 @@ func (gpio *GPIO) Read() (uint8, error) {
 		return 0, err
 	}
 
-	gpio.config.val = val
+	gpio.config.Val = val
 
 	return val, nil
 }
@@ -75,8 +75,8 @@ func (gpio *GPIO) Read() (uint8, error) {
 // more fine-grained control, use Read/Write instead.
 func (gpio *GPIO) Set(pin CPin, val bool) error {
 
-	dir := gpio.config.dir | uint8(pin)
-	set := gpio.config.val
+	dir := gpio.config.Dir | uint8(pin)
+	set := gpio.config.Val
 
 	if val {
 		set |= uint8(pin)
