@@ -10,21 +10,23 @@ import (
 )
 
 const (
-	defIndex  int    = 0
-	defVID    int    = 0x0403
-	defPID    int    = 0x6014
-	defSerial string = ""
-	defDesc   string = ""
+	defNoDevice bool   = false
+	defIndex    int    = 0
+	defVID      int    = 0x0403
+	defPID      int    = 0x6014
+	defSerial   string = ""
+	defDesc     string = ""
 
 	alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var (
-	optIndex  int
-	optVID    int
-	optPID    int
-	optSerial string
-	optDesc   string
+	optNoDevice bool
+	optIndex    int
+	optVID      int
+	optPID      int
+	optSerial   string
+	optDesc     string
 
 	rng *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
@@ -39,6 +41,7 @@ func randString(length uint8) string {
 
 func TestMain(m *testing.M) {
 
+	flag.BoolVar(&optNoDevice, "nodevice", defNoDevice, "do not expect to open an FT232H")
 	flag.IntVar(&optIndex, "index", defIndex, "use device enumerated at `index`")
 	flag.IntVar(&optVID, "vid", defVID, "use device with vendor ID `vid`")
 	flag.IntVar(&optPID, "pid", defPID, "use device with product ID `pid`")
@@ -56,14 +59,26 @@ func TestNewFT232H(t *testing.T) {
 		err error
 	)
 
-	ft, err = NewFT232H()
-	if nil != err {
-		t.Fatalf("could not open device: %v", err)
-	}
+	if !optNoDevice {
 
-	err = ft.Close()
-	if nil != err {
-		t.Fatalf("could not close device: %v", err)
+		ft, err = NewFT232H()
+		if nil != err {
+			t.Fatalf("could not open device: %v", err)
+		}
+
+		err = ft.Close()
+		if nil != err {
+			t.Fatalf("could not close device: %v", err)
+		}
+
+	} else {
+
+		ft, err = NewFT232H()
+		if nil == err {
+			ft.Close()
+			t.Fatalf("opened device with -nodevice set")
+		}
+
 	}
 }
 
@@ -74,7 +89,7 @@ func TestNewFT232HWithIndex(t *testing.T) {
 		index int
 		open  bool // true if expecting device to open successfully
 	}{
-		{name: "selected", index: optIndex, open: true},
+		{name: "selected", index: optIndex, open: !optNoDevice},
 		{name: "invalid", index: 0xBADC0DE, open: false},
 	} {
 		t.Run(fmt.Sprintf("%s={%d}", test.name, test.index),
@@ -91,7 +106,11 @@ func TestNewFT232HWithIndex(t *testing.T) {
 				} else {
 					if nil == err { // fail
 						ft.Close()
-						s.Fatalf("opened device at index=%d", test.index)
+						if optNoDevice {
+							s.Fatalf("opened device at index=%d with -nodevice set", test.index)
+						} else {
+							s.Fatalf("opened device at index=%d", test.index)
+						}
 					} else { // success
 						// empty
 					}
@@ -108,7 +127,7 @@ func TestNewFT232HWithVIDPID(t *testing.T) {
 		pid  int
 		open bool // true if expecting device to open successfully
 	}{
-		{name: "selected", vid: optVID, pid: optPID, open: true},
+		{name: "selected", vid: optVID, pid: optPID, open: !optNoDevice},
 		{name: "invalidVID", vid: 0xBAD, pid: optPID, open: false},
 		{name: "invalidPID", vid: optVID, pid: 0xC0DE, open: false},
 		{name: "invalid", vid: 0xBAD, pid: 0xC0DE, open: false},
@@ -129,8 +148,13 @@ func TestNewFT232HWithVIDPID(t *testing.T) {
 				} else {
 					if nil == err { // fail
 						ft.Close()
-						s.Fatalf("opened device with VID=0x%X, PID=0x%X",
-							test.vid, test.pid)
+						if optNoDevice {
+							s.Fatalf("opened device at with VID=0x%X, PID=0x%X and -nodevice set",
+								test.vid, test.pid)
+						} else {
+							s.Fatalf("opened device with VID=0x%X, PID=0x%X",
+								test.vid, test.pid)
+						}
 					} else { // success
 					}
 				}
@@ -145,8 +169,8 @@ func TestNewFT232HWithSerial(t *testing.T) {
 		serial string
 		open   bool // true if expecting device to open successfully
 	}{
-		{name: "selected", serial: optSerial, open: true},
-		{name: "empty", serial: "", open: true},
+		{name: "selected", serial: optSerial, open: !optNoDevice},
+		{name: "empty", serial: "", open: !optNoDevice},
 		{name: "random", serial: randString(16), open: false},
 	} {
 		t.Run(fmt.Sprintf("%s=\"%s\"", test.name, test.serial),
@@ -165,7 +189,12 @@ func TestNewFT232HWithSerial(t *testing.T) {
 				} else {
 					if nil == err { // fail
 						ft.Close()
-						s.Fatalf("opened device with serial=\"%s\"", test.serial)
+						if optNoDevice {
+							s.Fatalf("opened device with serial=\"%s\" and -nodevice set",
+								test.serial)
+						} else {
+							s.Fatalf("opened device with serial=\"%s\"", test.serial)
+						}
 					} else { // success
 						// empty
 					}
@@ -181,8 +210,8 @@ func TestNewFT232HWithDesc(t *testing.T) {
 		desc string
 		open bool // true if expecting device to open successfully
 	}{
-		{name: "selected", desc: optDesc, open: true},
-		{name: "empty", desc: "", open: true},
+		{name: "selected", desc: optDesc, open: !optNoDevice},
+		{name: "empty", desc: "", open: !optNoDevice},
 		{name: "random", desc: randString(64), open: false},
 	} {
 		t.Run(fmt.Sprintf("%s=\"%s\"", test.name, test.desc),
@@ -201,7 +230,12 @@ func TestNewFT232HWithDesc(t *testing.T) {
 				} else {
 					if nil == err { // fail
 						ft.Close()
-						s.Fatalf("opened device with description=\"%s\"", test.desc)
+						if optNoDevice {
+							s.Fatalf("opened device with description=\"%s\" and -nodevice set",
+								test.desc)
+						} else {
+							s.Fatalf("opened device with description=\"%s\"", test.desc)
+						}
 					} else { // success
 						// empty
 					}
@@ -281,10 +315,10 @@ func TestPin(t *testing.T) {
 				t.Fatalf("expected C(%d) to be valid", i)
 			}
 
-			if (1<<i) != d.Mask() {
+			if (1 << i) != d.Mask() {
 				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<i)
 			}
-			if (1<<i) != c.Mask() {
+			if (1 << i) != c.Mask() {
 				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<i)
 			}
 
