@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// set position at voltage register 0x02, default INA260 address 0x40
-	if _, err := ft.I2C.Write(0x40, []uint8{0x02}, true, false); nil != err {
+	if _, err := ft.I2C.Write(0x40, []uint8{0xFF}, true, true); nil != err {
 		log.Fatalf("I2C.Write(): %v", err)
 	}
 

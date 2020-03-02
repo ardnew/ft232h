@@ -2,14 +2,7 @@
 # ------------------------------------------------------------------------------
 #
 #  build fresh libft232h.a needed by github.com/ardnew/ft232h cgo interface for
-#  all of the linux platforms.
-#
-#  i ~think~ only the following cross-compiler packages are needed on a host
-#  running 64-bit Ubuntu (amd64):
-#
-#    gcc-i686-linux-gnu   gcc-aarch64-linux-gnu   gcc-arm-linux-gnueabihf
-#    ------------------ | --------------------- | -----------------------
-#        linux-386             linux-arm64               linux-arm
+#  all of the darwin (macOS) platforms.
 #
 # ------------------------------------------------------------------------------
 
@@ -32,8 +25,8 @@ targets="clean build"
 
 # try to remove anything that looks like (ft)debug(=...)
 for (( i = 1; i <= $#; ++i )) do
-        [[ ${!i} =~ (^|[[:space:]])(ft)?debug(=[^[:space:]]*[1-9a-zA-Z][^[:space:]]*)?($|[[:space:]]) ]] &&
-                debug=1 || given=( ${given[@]} ${!i} )
+	[[ ${!i} =~ (^|[[:space:]])(ft)?debug(=[^[:space:]]*[1-9a-zA-Z][^[:space:]]*)?($|[[:space:]]) ]] &&
+		debug=1 || given=( ${given[@]} ${!i} )
 done
 
 # use the given make targets if any were provided
@@ -42,7 +35,4 @@ done
 # add the debug flag if provided
 [[ -n ${debug} ]] && targets="$targets ftdebug=1"
 
-rebuild  "$targets"  linux-amd64
-rebuild  "$targets"  linux-386    i686-linux-gnu-
-rebuild  "$targets"  linux-arm64  aarch64-linux-gnu-
-rebuild  "$targets"  linux-arm    arm-linux-gnueabihf-
+rebuild  "$targets"  darwin-amd64

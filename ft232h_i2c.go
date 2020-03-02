@@ -1,6 +1,9 @@
 package ft232h
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 // I2C stores interface configuration settings for an I²C master and provides
 // methods for reading and writing to I²C slave devices.
@@ -35,7 +38,7 @@ func (i2c *I2C) GetConfig() *I2CConfig {
 const (
 	I2CClockMaximum   I2CClockRate = I2CClockHighSpeedMode
 	I2CClockDefault   I2CClockRate = I2CClockFastMode
-	I2CLatencyDefault byte         = 2
+	I2CLatencyDefault byte         = 1
 )
 
 // i2cConfig holds all of the configuration settings for an I²C channel stored
@@ -248,6 +251,7 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 		return nil, fmt.Errorf("invalid slave address (0x00-0x7F): 0x%02X", addr)
 	}
 
+	log.Printf("<<<<<< [%02X, {%+v}, {%032b}]", addr, count, opt)
 	return _I2C_Read(i2c, addr, count, opt)
 }
 
@@ -274,5 +278,6 @@ func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, err
 		return 0, fmt.Errorf("invalid slave address (0x00-0x7F): 0x%02X", addr)
 	}
 
+	log.Printf(">>>>>> [%02X, {%+v}, {%032b}]", addr, data, opt)
 	return _I2C_Write(i2c, addr, data, opt)
 }

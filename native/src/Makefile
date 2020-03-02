@@ -84,7 +84,9 @@ linux-objdump  = $(objdump) -fpt
 darwin-objdump = $(objdump) -macho -dylibs-used -archive-headers -private-header -t -indirect-symbols -g
 
 defines        = -DFTD2XX_STATIC
-#defines        += -DINFRA_DEBUG_ENABLE
+ifneq "" "$(strip $(ftdebug))"
+defines       += -DINFRA_DEBUG_ENABLE
+endif
 optimize       = -Og
 debug          = -g
 warnings       = -Wall

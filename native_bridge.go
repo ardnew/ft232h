@@ -13,6 +13,10 @@ package ft232h
 // #include "stdlib.h"
 import "C"
 
+import (
+	"log"
+)
+
 // Type aliases for the native types needed by the C libraries.
 type (
 	Handle C.FT_HANDLE
@@ -558,6 +562,8 @@ func _I2C_Write(i2c *I2C, addr uint, data []uint8, opt i2cXferOption) (uint, err
 			}
 		}
 
+		log.Printf(">>>> {%02X, %d, %+v, %016b}", addr, end-beg, data[beg:end], opt)
+
 		stat := Status(C.I2C_DeviceWrite(C.PVOID(i2c.device.info.handle),
 			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
 			C.uint32(opt)))
@@ -614,6 +620,8 @@ func _I2C_Read(i2c *I2C, addr uint, count uint, opt i2cXferOption) ([]uint8, err
 				opt |= i2cStopBit
 			}
 		}
+
+		log.Printf("<<<< {%02X, %d, %+v, %016b}", addr, end-beg, data[beg:end], opt)
 
 		stat := Status(C.I2C_DeviceRead(C.PVOID(i2c.device.info.handle),
 			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
