@@ -316,42 +316,14 @@ func _SPI_Change(spi *SPI) error {
 	return nil
 }
 
-// _SPI_Write performs an SPI write using the libMPSSE driver with the given
-// open SPI interface, slice of uint8 data to send, and transfer options,
-// returning the total number of bytes successfully transferred, and a non-nil
-// error if there was an error.
-// If the given data slice length is greater than UINT16_MAX (65536), multiple
-// write requests are performed with the libMPSSE driver.
-func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint, error) {
-
-	// note that MPSSE has a limitation on the size of SPI transfers, since the
-	// packet length has to fit into 16 bits, so the max transfer size is 65536.
-	// we break up the buffer here to transmit as much as possible at once.
-	const MaxTransferBytes = 65536
-	var sent C.uint32
-
-	dataLen := uint(len(data))
-
-	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
-		end := beg + MaxTransferBytes
-		if end > dataLen {
-			end = dataLen
-		}
-		stat := Status(C.SPI_Write(C.PVOID(spi.device.info.handle),
-			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
-		if !stat.OK() {
-			return beg + uint(sent), stat
-		}
-	}
-	return uint(dataLen), nil
-}
-
 // _SPI_Read performs an SPI read using the libMPSSE driver with the given open
 // SPI interface, number of bytes to read, and transfer options, returning a
 // slice of uint8 containing the bytes successfully read, and a non-nil error if
 // there was an error.
 // If the given data slice length is greater than UINT16_MAX (65536), multiple
-// read requests are performed with the libMPSSE driver.
+// read requests are performed with the libMPSSE driver. In this case, if the CS
+// assert/deassert options are set, the CS line is only asserted and/or
+// deasserted with the first and last transfer requests, respectively.
 func _SPI_Read(spi *SPI, count uint, opt spiXferOption) ([]uint8, error) {
 
 	// note that MPSSE has a limitation on the size of SPI transfers, since the
@@ -362,18 +334,94 @@ func _SPI_Read(spi *SPI, count uint, opt spiXferOption) ([]uint8, error) {
 
 	data := make([]uint8, count)
 
+	ass := (opt & spiCSAssert) > 0
+	dea := (opt & spiCSDeAssert) > 0
+
 	for beg := uint(0); beg < count; beg += MaxTransferBytes {
+
 		end := beg + MaxTransferBytes
 		if end > count {
 			end = count
 		}
+
+		// dont assert if this isn't the first packet
+		if ass {
+			if beg > 0 {
+				opt &= ^spiCSAssert
+			}
+		}
+
+		// don't deassert if this isn't the last packet
+		if dea {
+			if end < count {
+				opt &= ^spiCSDeAssert
+			} else {
+				opt |= spiCSDeAssert
+			}
+		}
+
 		stat := Status(C.SPI_Read(C.PVOID(spi.device.info.handle),
 			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
 		if !stat.OK() {
 			return data[:beg+uint(sent)], stat
 		}
+
 	}
 	return data, nil
+}
+
+// _SPI_Write performs an SPI write using the libMPSSE driver with the given
+// open SPI interface, slice of uint8 data to send, and transfer options,
+// returning the total number of bytes successfully transferred, and a non-nil
+// error if there was an error.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// write requests are performed with the libMPSSE driver. In this case, if the
+// CS assert/deassert options are set, the CS line is only asserted and/or
+// deasserted with the first and last transfer requests, respectively.
+func _SPI_Write(spi *SPI, data []uint8, opt spiXferOption) (uint, error) {
+
+	// note that MPSSE has a limitation on the size of SPI transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var sent C.uint32
+
+	dataLen := uint(len(data))
+
+	ass := (opt & spiCSAssert) > 0
+	dea := (opt & spiCSDeAssert) > 0
+
+	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
+
+		end := beg + MaxTransferBytes
+		if end > dataLen {
+			end = dataLen
+		}
+
+		// dont assert if this isn't the first packet
+		if ass {
+			if beg > 0 {
+				opt &= ^spiCSAssert
+			}
+		}
+
+		// don't deassert if this isn't the last packet
+		if dea {
+			if end < dataLen {
+				opt &= ^spiCSDeAssert
+			} else {
+				opt |= spiCSDeAssert
+			}
+		}
+
+		stat := Status(C.SPI_Write(C.PVOID(spi.device.info.handle),
+			(*C.uint8)(&data[beg]), C.uint32(end-beg), &sent, C.uint32(opt)))
+		if !stat.OK() {
+			return beg + uint(sent), stat
+		}
+
+	}
+	return uint(dataLen), nil
 }
 
 // _SPI_Swap performs a simultaneous SPI read+write using the libMPSSE driver
@@ -383,7 +431,9 @@ func _SPI_Read(spi *SPI, count uint, opt spiXferOption) ([]uint8, error) {
 // Simultaneous read+write in libMPSSE means that "one bit is clocked in and one
 // bit is clocked out during every clock cycle."
 // If the given data slice length is greater than UINT16_MAX (65536), multiple
-// readwrite requests are performed with the libMPSSE driver.
+// readwrite requests are performed with the libMPSSE driver. In this case, if
+// the CS assert/deassert options are set, the CS line is only asserted and/or
+// deasserted with the first and last transfer requests, respectively.
 func _SPI_Swap(spi *SPI, send []uint8, opt spiXferOption) ([]uint8, error) {
 
 	// note that MPSSE has a limitation on the size of SPI transfers, since the
@@ -395,17 +445,183 @@ func _SPI_Swap(spi *SPI, send []uint8, opt spiXferOption) ([]uint8, error) {
 	dataLen := uint(len(send))
 	recv := make([]uint8, dataLen)
 
+	ass := (opt & spiCSAssert) > 0
+	dea := (opt & spiCSDeAssert) > 0
+
 	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
+
 		end := beg + MaxTransferBytes
 		if end > dataLen {
 			end = dataLen
 		}
+
+		// dont assert if this isn't the first packet
+		if ass {
+			if beg > 0 {
+				opt &= ^spiCSAssert
+			}
+		}
+
+		// don't deassert if this isn't the last packet
+		if dea {
+			if end < dataLen {
+				opt &= ^spiCSDeAssert
+			} else {
+				opt |= spiCSDeAssert
+			}
+		}
+
 		stat := Status(C.SPI_ReadWrite(C.PVOID(spi.device.info.handle),
 			(*C.uint8)(&recv[beg]), (*C.uint8)(&send[beg]),
 			C.uint32(end-beg), &swap, C.uint32(opt)))
 		if !stat.OK() {
 			return recv[:beg+uint(swap)], stat
 		}
+
 	}
 	return recv, nil
+}
+
+// _I2C_InitChannel initializes the MPSSE engine in I²C master mode with the
+// configuration defined in the given i2c using the libMPSSE driver.
+// If the FT232H device is already opened in any mode (including I²C), the
+// interface is first closed before re-opening with the new configuration.
+// Returns a non-nil error if the interface could not be closed or (re)opened.
+func _I2C_InitChannel(i2c *I2C) error {
+
+	// close any open channels before trying to init
+	if err := i2c.device.Close(); nil != err {
+		return err
+	}
+
+	stat := Status(C.I2C_OpenChannel(C.uint32(i2c.device.info.index),
+		(*C.PVOID)(&i2c.device.info.handle)))
+	if !stat.OK() {
+		return stat
+	}
+
+	config := C.I2C_ChannelConfig{
+		ClockRate:    C.I2C_CLOCKRATE(i2c.config.clockRate),
+		LatencyTimer: C.uint8(i2c.config.latency),
+		Options:      C.uint32(i2c.config.options),
+	}
+
+	stat = Status(C.I2C_InitChannel(C.PVOID(i2c.device.info.handle), &config))
+	if !stat.OK() {
+		return stat
+	}
+
+	return nil
+}
+
+// _I2C_Write performs an I²C write using the libMPSSE driver with the given
+// open I²C interface, 7-bit slave address, slice of uint8 data to send, and
+// transfer options, returning the total number of bytes successfully
+// transferred, and a non-nil error if there was an error.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// write requests are performed with the libMPSSE driver. In this case, if the
+// I²C start/stop bits are set, they are only generated on the first and last
+// transfer requests, respectively.
+func _I2C_Write(i2c *I2C, addr uint, data []uint8, opt i2cXferOption) (uint, error) {
+
+	// note that MPSSE has a limitation on the size of I²C transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var sent C.uint32
+
+	dataLen := uint(len(data))
+
+	start := (opt & i2cStartBit) > 0
+	stop := (opt & i2cStopBit) > 0
+
+	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
+
+		end := beg + MaxTransferBytes
+		if end > dataLen {
+			end = dataLen
+		}
+
+		// dont send start if this isn't the first packet
+		if start {
+			if beg > 0 {
+				opt &= ^i2cStartBit
+			}
+		}
+
+		// don't send stop if this isn't the last packet
+		if stop {
+			if end < dataLen {
+				opt &= ^i2cStopBit
+			} else {
+				opt |= i2cStopBit
+			}
+		}
+
+		stat := Status(C.I2C_DeviceWrite(C.PVOID(i2c.device.info.handle),
+			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
+			C.uint32(opt)))
+		if !stat.OK() {
+			return beg + uint(sent), stat
+		}
+
+	}
+	return uint(dataLen), nil
+}
+
+// _I2C_Read performs an I²C read using the libMPSSE driver with the given open
+// I²C interface, number of bytes to read, and transfer options, returning a
+// slice of uint8 containing the bytes successfully read, and a non-nil error if
+// there was an error.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// read requests are performed with the libMPSSE driver. In this case, if the
+// I²C start/stop bits are set, they are only generated on the first and last
+// transfer requests, respectively.
+func _I2C_Read(i2c *I2C, addr uint, count uint, opt i2cXferOption) ([]uint8, error) {
+
+	// note that MPSSE has a limitation on the size of I²C transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var sent C.uint32
+
+	data := make([]uint8, count)
+
+	start := (opt & i2cStartBit) > 0
+	stop := (opt & i2cStopBit) > 0
+
+	for beg := uint(0); beg < count; beg += MaxTransferBytes {
+
+		end := beg + MaxTransferBytes
+		if end > count {
+			end = count
+		}
+
+		if beg > 0 {
+			// don't readdress the slave
+			opt |= i2cNoAddress | i2cFastTransfer | i2cFastTransferBytes
+			// dont send start if this isn't the first packet
+			if start {
+				opt &= ^i2cStartBit
+			}
+		}
+
+		// don't send stop if this isn't the last packet
+		if stop {
+			if end < count {
+				opt &= ^i2cStopBit
+			} else {
+				opt |= i2cStopBit
+			}
+		}
+
+		stat := Status(C.I2C_DeviceRead(C.PVOID(i2c.device.info.handle),
+			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
+			C.uint32(opt)))
+		if !stat.OK() {
+			return data[:beg+uint(sent)], stat
+		}
+
+	}
+	return data, nil
 }

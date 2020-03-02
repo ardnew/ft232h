@@ -34,7 +34,7 @@ func (spi *SPI) GetConfig() *SPIConfig {
 const (
 	SPIClockMaximum   uint32 = 30000000
 	SPIClockDefault   uint32 = SPIClockMaximum
-	SPILatencyDefault byte   = 16 // used in FTDI example docs
+	SPILatencyDefault byte   = 2
 )
 
 // spiConfig holds all of the configuration settings for an SPI channel stored
@@ -336,54 +336,6 @@ func (spi *SPI) Close() error {
 	return spi.device.Close()
 }
 
-// Write writes the given byte slice data to the SPI interface.
-// There is no maximum length for the data slice.
-// If start is true, the CS line is asserted before transfer.
-// If stop is true, the CS line is de-asserted after transfer.
-// Returns the slice of bytes successfully written and a non-nil error if there
-// was an error.
-func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint, error) {
-
-	cs := spi.config.chipSelect
-	opt := spiXferDefault
-	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
-
-	if start {
-		if cs.IsMPSSE() {
-			opt |= spiCSAssert
-		} else {
-			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
-				return 0, err
-			}
-		}
-	}
-
-	if stop {
-		if cs.IsMPSSE() {
-			opt |= spiCSDeAssert
-		} else {
-			// deassert on return
-			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
-		}
-	}
-
-	return _SPI_Write(spi, data, opt)
-}
-
-// WriteTo returns the result of Write after configuring the active CS line.
-// If the given CS pin is not the same as the currently configured CS pin, the
-// CS configuration is changed and persists after writing.
-func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint, error) {
-
-	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
-		// change if we are writing to a slave different than currently configured
-		if err := spi.Change(cs); nil != err {
-			return 0, err
-		}
-	}
-	return spi.Write(data, start, stop)
-}
-
 // Read reads the given count number of bytes from the SPI interface.
 // There is no maximum length for the number of bytes to read.
 // If start is true, the CS line is asserted before transfer.
@@ -400,6 +352,7 @@ func (spi *SPI) Read(count uint, start bool, stop bool) ([]uint8, error) {
 		if cs.IsMPSSE() {
 			opt |= spiCSAssert
 		} else {
+			opt &= ^spiCSAssert
 			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
 				return nil, err
 			}
@@ -410,6 +363,7 @@ func (spi *SPI) Read(count uint, start bool, stop bool) ([]uint8, error) {
 		if cs.IsMPSSE() {
 			opt |= spiCSDeAssert
 		} else {
+			opt &= ^spiCSDeAssert
 			// deassert on return
 			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
 		}
@@ -432,6 +386,56 @@ func (spi *SPI) ReadFrom(cs Pin, count uint, start bool, stop bool) ([]uint8, er
 	return spi.Read(count, start, stop)
 }
 
+// Write writes the given byte slice data to the SPI interface.
+// There is no maximum length for the data slice.
+// If start is true, the CS line is asserted before transfer.
+// If stop is true, the CS line is de-asserted after transfer.
+// Returns the slice of bytes successfully written and a non-nil error if there
+// was an error.
+func (spi *SPI) Write(data []uint8, start bool, stop bool) (uint, error) {
+
+	cs := spi.config.chipSelect
+	opt := spiXferDefault
+	ass := 0 == uint32(spiCSActiveLow&spi.config.options)
+
+	if start {
+		if cs.IsMPSSE() {
+			opt |= spiCSAssert
+		} else {
+			opt &= ^spiCSAssert
+			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
+				return 0, err
+			}
+		}
+	}
+
+	if stop {
+		if cs.IsMPSSE() {
+			opt |= spiCSDeAssert
+		} else {
+			opt &= ^spiCSDeAssert
+			// deassert on return
+			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
+		}
+	}
+
+	return _SPI_Write(spi, data, opt)
+}
+
+// WriteTo returns the result of Write after configuring the active CS line.
+// If the given CS pin is not the same as the currently configured CS pin, the
+// CS configuration is changed and persists after writing.
+func (spi *SPI) WriteTo(cs Pin, data []uint8, start bool, stop bool) (uint, error) {
+
+	if (start || stop) && !cs.Equals(spi.config.chipSelect) {
+		// change if we are writing to a slave different than currently configured
+		if err := spi.Change(cs); nil != err {
+			return 0, err
+		}
+	}
+	return spi.Write(data, start, stop)
+}
+
 // Swap simultaneously reads and writes data on the SPI interface.
 // Simultaneous read+write means that "one bit is clocked in and one bit is
 // clocked out during every clock cycle."
@@ -450,6 +454,7 @@ func (spi *SPI) Swap(data []uint8, start bool, stop bool) ([]uint8, error) {
 		if cs.IsMPSSE() {
 			opt |= spiCSAssert
 		} else {
+			opt &= ^spiCSAssert
 			if err := spi.device.GPIO.Set(cs.(CPin), ass); nil != err {
 				return nil, err
 			}
@@ -460,6 +465,7 @@ func (spi *SPI) Swap(data []uint8, start bool, stop bool) ([]uint8, error) {
 		if cs.IsMPSSE() {
 			opt |= spiCSDeAssert
 		} else {
+			opt &= ^spiCSDeAssert
 			// deassert on return
 			defer func() { spi.device.GPIO.Set(cs.(CPin), !ass) }()
 		}
