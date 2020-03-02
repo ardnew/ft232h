@@ -20,7 +20,11 @@
      - multi-slave support with independent clocks `SCLK`, SPI modes, `CPOL`, etc.
    - unlimited effective transfer time/size
      - USB uses 64 KiB packets internally
-- [ ] `I2C` - _not yet implementented_
+- [x] `I2C` - read/write
+   - configurable clock rate up to high speed mode (3.4 Mb/s)
+   - internal or external SDA pullup option
+   - unlimited effective transfer time/size
+     - USB uses 64 KiB packets internally
 - [ ] `JTAG` - _not yet implementented_
 - [ ] `UART` - _not yet implementented_
 - [x] **TBD** (WIP)
