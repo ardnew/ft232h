@@ -35,6 +35,12 @@ func (i2c *I2C) GetConfig() *I2CConfig {
 	return i2c.config.I2CConfig()
 }
 
+// Constants defining legal 7-bit I²C slave addresses
+const (
+	I2CSlaveAddressMin = 0x08
+	I2CSlaveAddressMax = 0x77
+)
+
 // Constants related to I²C interface initialization.
 const (
 	I2CClockMaximum   I2CClockRate = I2CClockHighSpeedMode
@@ -49,7 +55,8 @@ type i2cConfig struct {
 	latency   uint8
 	options   i2cOption
 	breakNACK bool
-	lastNACK  bool
+	readNACK  bool
+	noDelay   bool
 }
 
 // i2cConfigDefault returns an i2cConfig struct stored in the private
@@ -61,7 +68,8 @@ func i2cConfigDefault() *i2cConfig {
 		latency:   I2CLatencyDefault,
 		options:   i2cOptionDefault,
 		breakNACK: i2cBreakNACKDefault,
-		lastNACK:  i2cLastNACKDefault,
+		readNACK:  i2cLastNACKDefault,
+		noDelay:   i2cNoDelayDefault,
 	}
 }
 
@@ -71,7 +79,8 @@ func (c *i2cConfig) I2CConfig() *I2CConfig {
 	return &I2CConfig{
 		I2COption: &I2COption{
 			BreakOnNACK:  c.breakNACK,
-			LastByteNACK: c.lastNACK,
+			LastReadNACK: c.readNACK,
+			NoUSBDelay:   c.noDelay,
 		},
 		Clock:        c.clockRate,
 		Latency:      c.latency,
@@ -95,7 +104,8 @@ const (
 // while an I²C interface is open.
 type I2COption struct {
 	BreakOnNACK  bool // do not continue reading/writing stream on slave NACK
-	LastByteNACK bool // send NACK after last byte read from I²C slave
+	LastReadNACK bool // send NACK after last byte read from I²C slave
+	NoUSBDelay   bool // pack all I²C data into the fewest number of USB packets
 }
 
 // i2cOption stores the various I²C configuration options as a 32-bit bitmap.
@@ -130,6 +140,7 @@ const (
 const (
 	i2cBreakNACKDefault = false
 	i2cLastNACKDefault  = false
+	i2cNoDelayDefault   = true
 )
 
 // Valid verifies the i2cOption receiver opt isnt equal to the sentinel value
@@ -167,7 +178,7 @@ const (
 	// libMPSSE generates an ACKs for every byte read. Some I²C slaves require the
 	// I²C master to generate a NACK for the last data byte read. Setting this bit
 	// enables working with such I²C slaves
-	i2cNACKLastByte i2cXferOption = 0x00000008
+	i2cLastReadNACK i2cXferOption = 0x00000008
 
 	// no address phase, no USB interframe delays
 	i2cFastTransferBytes i2cXferOption = 0x00000010
@@ -180,7 +191,7 @@ const (
 	i2cNoAddress i2cXferOption = 0x00000040
 
 	// default read/write options
-	i2cXferDefault = i2cFastTransfer | i2cFastTransferBytes
+	i2cXferDefault i2cXferOption = 0x00000000
 
 	// TBD
 	// i2cCmdGetdeviceidRD = 0xF9
@@ -195,7 +206,8 @@ const (
 func (i2c *I2C) Option(opt *I2COption) error {
 
 	i2c.config.breakNACK = opt.BreakOnNACK
-	i2c.config.lastNACK = opt.LastByteNACK
+	i2c.config.readNACK = opt.LastReadNACK
+	i2c.config.noDelay = opt.NoUSBDelay
 
 	return nil
 }
@@ -277,6 +289,11 @@ func (i2c *I2C) Close() error {
 // an error.
 func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, error) {
 
+	if !(addr >= I2CSlaveAddressMin && addr <= I2CSlaveAddressMax) {
+		return nil, fmt.Errorf("invalid slave address (0x%02X-0x%02X): 0x%02X",
+			I2CSlaveAddressMin, I2CSlaveAddressMax, addr)
+	}
+
 	opt := i2cXferDefault
 
 	if start {
@@ -287,19 +304,19 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 		opt |= i2cStopBit
 	}
 
-	// following flags are not compatible when fast transfer is enabled (deffault)
-	// with start/stop condition generation
-	if !start && !stop {
-		if i2c.config.lastNACK {
-			opt |= i2cNACKLastByte
+	if i2c.config.noDelay {
+		opt |= i2cFastTransfer | i2cFastTransferBytes
+	}
+
+	// these flags are not supported when fast transfer (I2COption.NoUSBDelay)
+	// is enabled with start/stop condition generation
+	if !(i2c.config.noDelay && (start || stop)) {
+		if i2c.config.readNACK {
+			opt |= i2cLastReadNACK
 		}
 		if i2c.config.breakNACK {
 			opt |= i2cBreakOnNACK
 		}
-	}
-
-	if addr > 0x7F {
-		return nil, fmt.Errorf("invalid slave address (0x00-0x7F): 0x%02X", addr)
 	}
 
 	log.Printf("<<<<<< [%02X, {%+v}, {%032b}]", addr, count, opt)
@@ -315,6 +332,11 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 // was an error.
 func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, error) {
 
+	if !(addr >= I2CSlaveAddressMin && addr <= I2CSlaveAddressMax) {
+		return 0, fmt.Errorf("invalid slave address (0x%02X-0x%02X): 0x%02X",
+			I2CSlaveAddressMin, I2CSlaveAddressMax, addr)
+	}
+
 	opt := i2cXferDefault
 
 	if start {
@@ -325,16 +347,16 @@ func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, err
 		opt |= i2cStopBit
 	}
 
-	// following flag is not compatible when fast transfer is enabled (deffault)
-	// with start/stop condition generation
-	if !start && !stop {
+	if i2c.config.noDelay {
+		opt |= i2cFastTransfer | i2cFastTransferBytes
+	}
+
+	// this flag is not supported when fast transfer (I2COption.NoUSBDelay) is
+	// enabled with start/stop condition generation
+	if !(i2c.config.noDelay && (start || stop)) {
 		if i2c.config.breakNACK {
 			opt |= i2cBreakOnNACK
 		}
-	}
-
-	if addr > 0x7F {
-		return 0, fmt.Errorf("invalid slave address (0x00-0x7F): 0x%02X", addr)
 	}
 
 	log.Printf(">>>>>> [%02X, {%+v}, {%032b}]", addr, data, opt)
