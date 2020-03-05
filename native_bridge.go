@@ -518,63 +518,6 @@ func _I2C_InitChannel(i2c *I2C) error {
 	return nil
 }
 
-// _I2C_Write performs an I²C write using the libMPSSE driver with the given
-// open I²C interface, 7-bit slave address, slice of uint8 data to send, and
-// transfer options, returning the total number of bytes successfully
-// transferred, and a non-nil error if there was an error.
-// If the given data slice length is greater than UINT16_MAX (65536), multiple
-// write requests are performed with the libMPSSE driver. In this case, if the
-// I²C start/stop bits are set, they are only generated on the first and last
-// transfer requests, respectively.
-func _I2C_Write(i2c *I2C, addr uint, data []uint8, opt i2cXferOption) (uint, error) {
-
-	// note that MPSSE has a limitation on the size of I²C transfers, since the
-	// packet length has to fit into 16 bits, so the max transfer size is 65536.
-	// we break up the buffer here to transmit as much as possible at once.
-	const MaxTransferBytes = 65536
-	var sent C.uint32
-
-	dataLen := uint(len(data))
-
-	start := (opt & i2cStartBit) > 0
-	stop := (opt & i2cStopBit) > 0
-
-	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
-
-		end := beg + MaxTransferBytes
-		if end > dataLen {
-			end = dataLen
-		}
-
-		// dont send start if this isn't the first packet
-		if start {
-			if beg > 0 {
-				opt &= ^i2cStartBit
-			}
-		}
-
-		// don't send stop if this isn't the last packet
-		if stop {
-			if end < dataLen {
-				opt &= ^i2cStopBit
-			} else {
-				opt |= i2cStopBit
-			}
-		}
-
-		log.Printf(">>>> {%02X, %d, %+v, %016b}", addr, end-beg, data[beg:end], opt)
-
-		stat := Status(C.I2C_DeviceWrite(C.PVOID(i2c.device.info.handle),
-			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
-			C.uint32(opt)))
-		if !stat.OK() {
-			return beg + uint(sent), stat
-		}
-
-	}
-	return uint(dataLen), nil
-}
-
 // _I2C_Read performs an I²C read using the libMPSSE driver with the given open
 // I²C interface, number of bytes to read, and transfer options, returning a
 // slice of uint8 containing the bytes successfully read, and a non-nil error if
@@ -604,8 +547,8 @@ func _I2C_Read(i2c *I2C, addr uint, count uint, opt i2cXferOption) ([]uint8, err
 		}
 
 		if beg > 0 {
-			// don't readdress the slave
-			opt |= i2cNoAddress | i2cFastTransfer | i2cFastTransferBytes
+			// TBD: don't readdress the slave (is this correct?)
+			opt |= i2cNoAddress
 			// dont send start if this isn't the first packet
 			if start {
 				opt &= ^i2cStartBit
@@ -632,4 +575,63 @@ func _I2C_Read(i2c *I2C, addr uint, count uint, opt i2cXferOption) ([]uint8, err
 
 	}
 	return data, nil
+}
+
+// _I2C_Write performs an I²C write using the libMPSSE driver with the given
+// open I²C interface, 7-bit slave address, slice of uint8 data to send, and
+// transfer options, returning the total number of bytes successfully
+// transferred, and a non-nil error if there was an error.
+// If the given data slice length is greater than UINT16_MAX (65536), multiple
+// write requests are performed with the libMPSSE driver. In this case, if the
+// I²C start/stop bits are set, they are only generated on the first and last
+// transfer requests, respectively.
+func _I2C_Write(i2c *I2C, addr uint, data []uint8, opt i2cXferOption) (uint, error) {
+
+	// note that MPSSE has a limitation on the size of I²C transfers, since the
+	// packet length has to fit into 16 bits, so the max transfer size is 65536.
+	// we break up the buffer here to transmit as much as possible at once.
+	const MaxTransferBytes = 65536
+	var sent C.uint32
+
+	dataLen := uint(len(data))
+
+	start := (opt & i2cStartBit) > 0
+	stop := (opt & i2cStopBit) > 0
+
+	for beg := uint(0); beg < dataLen; beg += MaxTransferBytes {
+
+		end := beg + MaxTransferBytes
+		if end > dataLen {
+			end = dataLen
+		}
+
+		if beg > 0 {
+			// TBD: don't readdress the slave (is this correct?)
+			opt |= i2cNoAddress
+			// dont send start if this isn't the first packet
+			if start {
+				opt &= ^i2cStartBit
+			}
+		}
+
+		// don't send stop if this isn't the last packet
+		if stop {
+			if end < dataLen {
+				opt &= ^i2cStopBit
+			} else {
+				opt |= i2cStopBit
+			}
+		}
+
+		log.Printf(">>>> {%02X, %d, %+v, %016b}", addr, end-beg, data[beg:end], opt)
+
+		stat := Status(C.I2C_DeviceWrite(C.PVOID(i2c.device.info.handle),
+			C.uint32(addr), C.uint32(end-beg), (*C.uint8)(&data[beg]), &sent,
+			C.uint32(opt)))
+		if !stat.OK() {
+			return beg + uint(sent), stat
+		}
+
+	}
+	return uint(dataLen), nil
 }

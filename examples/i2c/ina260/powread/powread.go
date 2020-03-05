@@ -6,6 +6,10 @@ import (
 	"github.com/ardnew/ft232h"
 )
 
+const (
+	slave = 0x40 // default INA260 slave address
+)
+
 func main() {
 
 	ft, err := ft232h.NewFT232HWithDesc("FT232H-C")
@@ -19,13 +23,13 @@ func main() {
 		log.Fatalf("I2C.Init(): %v", err)
 	}
 
-	// set position at voltage register 0x02, default INA260 address 0x40
-	if _, err := ft.I2C.Write(0x40, []uint8{0xFF}, true, true); nil != err {
+	// set register pointer at 0x02 (voltage)
+	if _, err := ft.I2C.Write(slave, []uint8{0x02}, true, true); nil != err {
 		log.Fatalf("I2C.Write(): %v", err)
 	}
 
 	for {
-		if id, err := ft.I2C.Read(0x40, 2, true, true); nil != err {
+		if id, err := ft.I2C.Read(slave, 2, true, true); nil != err {
 			log.Fatalf("I2C.Read(): %v", err)
 		} else {
 			log.Printf("reply: %+v", id)

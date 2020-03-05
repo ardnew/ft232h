@@ -17,6 +17,7 @@ type I2C struct {
 // I2CConfig holds all of the configuration settings for initializing an I²C
 // interface.
 type I2CConfig struct {
+	*I2COption
 	Clock        I2CClockRate // 100000 (100 kb/s) - 3400000 (3.4 Mb/s)
 	Latency      byte         // 1-255 USB HiSpeed, 2-255 USB FullSpeed
 	Clock3Phase  bool         // I²C 3-phase clocking enabled=true/disabled=false
@@ -38,7 +39,7 @@ func (i2c *I2C) GetConfig() *I2CConfig {
 const (
 	I2CClockMaximum   I2CClockRate = I2CClockHighSpeedMode
 	I2CClockDefault   I2CClockRate = I2CClockFastMode
-	I2CLatencyDefault byte         = 1
+	I2CLatencyDefault byte         = 2
 )
 
 // i2cConfig holds all of the configuration settings for an I²C channel stored
@@ -47,6 +48,8 @@ type i2cConfig struct {
 	clockRate I2CClockRate
 	latency   uint8
 	options   i2cOption
+	breakNACK bool
+	lastNACK  bool
 }
 
 // i2cConfigDefault returns an i2cConfig struct stored in the private
@@ -57,6 +60,8 @@ func i2cConfigDefault() *i2cConfig {
 		clockRate: I2CClockDefault,
 		latency:   I2CLatencyDefault,
 		options:   i2cOptionDefault,
+		breakNACK: i2cBreakNACKDefault,
+		lastNACK:  i2cLastNACKDefault,
 	}
 }
 
@@ -64,6 +69,10 @@ func i2cConfigDefault() *i2cConfig {
 // the private configuration field of an instance of I2C.
 func (c *i2cConfig) I2CConfig() *I2CConfig {
 	return &I2CConfig{
+		I2COption: &I2COption{
+			BreakOnNACK:  c.breakNACK,
+			LastByteNACK: c.lastNACK,
+		},
 		Clock:        c.clockRate,
 		Latency:      c.latency,
 		Clock3Phase:  c.options.clock3Phase(),
@@ -81,6 +90,13 @@ const (
 	I2CClockFastModePlus  I2CClockRate = 1000000 // 1000 kb/sec
 	I2CClockHighSpeedMode I2CClockRate = 3400000 // 3.4 Mb/sec
 )
+
+// I2COption holds all of the dynamic configuration settings that can be changed
+// while an I²C interface is open.
+type I2COption struct {
+	BreakOnNACK  bool // do not continue reading/writing stream on slave NACK
+	LastByteNACK bool // send NACK after last byte read from I²C slave
+}
 
 // i2cOption stores the various I²C configuration options as a 32-bit bitmap.
 type i2cOption uint32
@@ -108,6 +124,12 @@ const (
 const (
 	i2cOptionInvalid i2cOption = 0xAAAAAAAA
 	i2cOptionDefault           = i2cLowDriveOnlyDefault | i2cClock3PhaseDefault
+)
+
+// Constants related to the dynamic configuration options of an I²C interface.
+const (
+	i2cBreakNACKDefault = false
+	i2cLastNACKDefault  = false
 )
 
 // Valid verifies the i2cOption receiver opt isnt equal to the sentinel value
@@ -157,12 +179,26 @@ const (
 	// is a special I²C frame that doesn't require an address
 	i2cNoAddress i2cXferOption = 0x00000040
 
+	// default read/write options
+	i2cXferDefault = i2cFastTransfer | i2cFastTransferBytes
+
 	// TBD
 	// i2cCmdGetdeviceidRD = 0xF9
 	// i2cCmdGetdeviceidWR = 0xF8
 	// i2cGiveACK  = 1
 	// i2cGiveNACK = 0
 )
+
+// Option changes the dynamic configuration parameters of the I²C interface.
+// It can be called while the I²C interface is open without having to first
+// close and reopen the device.
+func (i2c *I2C) Option(opt *I2COption) error {
+
+	i2c.config.breakNACK = opt.BreakOnNACK
+	i2c.config.lastNACK = opt.LastByteNACK
+
+	return nil
+}
 
 // Config initializes the I²C interface with the given configuration to a state
 // ready for read/write.
@@ -204,6 +240,10 @@ func (i2c *I2C) Config(cfg *I2CConfig) error {
 
 	i2c.config.options = driveOpt | phaseOpt
 
+	if err := i2c.Option(cfg.I2COption); nil != err {
+		return err
+	}
+
 	return i2c.Init()
 }
 
@@ -229,7 +269,7 @@ func (i2c *I2C) Close() error {
 }
 
 // Read reads the given count number of bytes from the I²C interface.
-// The given address is the unshifted 7-bit I²C slave address to write to.
+// The given address is the unshifted 7-bit I²C slave address to read from.
 // There is no maximum length for the number of bytes to read.
 // If start is true, an I²C start condition is generated before transfer.
 // If stop is true, an I²C stop condition is generated after transfer.
@@ -237,7 +277,7 @@ func (i2c *I2C) Close() error {
 // an error.
 func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, error) {
 
-	opt := i2cNACKLastByte | i2cBreakOnNACK
+	opt := i2cXferDefault
 
 	if start {
 		opt |= i2cStartBit
@@ -245,6 +285,17 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 
 	if stop {
 		opt |= i2cStopBit
+	}
+
+	// following flags are not compatible when fast transfer is enabled (deffault)
+	// with start/stop condition generation
+	if !start && !stop {
+		if i2c.config.lastNACK {
+			opt |= i2cNACKLastByte
+		}
+		if i2c.config.breakNACK {
+			opt |= i2cBreakOnNACK
+		}
 	}
 
 	if addr > 0x7F {
@@ -264,7 +315,7 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 // was an error.
 func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, error) {
 
-	opt := i2cBreakOnNACK
+	opt := i2cXferDefault
 
 	if start {
 		opt |= i2cStartBit
@@ -272,6 +323,14 @@ func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, err
 
 	if stop {
 		opt |= i2cStopBit
+	}
+
+	// following flag is not compatible when fast transfer is enabled (deffault)
+	// with start/stop condition generation
+	if !start && !stop {
+		if i2c.config.breakNACK {
+			opt |= i2cBreakOnNACK
+		}
 	}
 
 	if addr > 0x7F {

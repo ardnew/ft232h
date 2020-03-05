@@ -167,7 +167,7 @@ showconfig:
 	@printf -- "current build configuration:\n"
 	@printf -- "\n"
 	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "platform" "$(platform)"
-	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "install" "$(install)"
+	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "install" "$(install)/"
 	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "build path" "./$(platform)/"
 	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "ftdebug" "$(ftdebug-yesno)"
 	@printf -- "%*s %-*s = %s\n" $(marg) " " $(cols) "CC" "$(CC)"
