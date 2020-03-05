@@ -23,16 +23,20 @@ rebuild()
 # clean and rebuild by default
 targets="clean build"
 
-# try to remove anything that looks like (ft)debug(=...)
+# remove and potentially use the debug flag if provided, i.e. (ft)debug(=1), but not (ft)debug=0
 for (( i = 1; i <= $#; ++i )) do
-	[[ ${!i} =~ (^|[[:space:]])(ft)?debug(=[^[:space:]]*[1-9a-zA-Z][^[:space:]]*)?($|[[:space:]]) ]] &&
-		debug=1 || given=( ${given[@]} ${!i} )
+	if [[ ${!i} =~ debug ]]; then
+		[[ ${!i} =~ (^|[[:space:]])(ft)?debug(=[^[:space:]]*[1-9a-zA-Z][^[:space:]]*)?($|[[:space:]]) ]] &&
+			debug=1
+	else
+		given=( ${given[@]} ${!i} )
+	fi
 done
 
 # use the given make targets if any were provided
 [[ ${#given} -gt 0 ]] && targets="${given[@]}"
 
 # add the debug flag if provided
-[[ -n ${debug} ]] && targets="$targets ftdebug=1"
+[[ -n ${debug} ]] && targets="ftdebug=1 $targets"
 
 rebuild  "$targets"  darwin-amd64
