@@ -77,13 +77,13 @@ func (c *spiConfig) SPIConfig() *SPIConfig {
 // SPIOption holds all of the dynamic configuration settings that can be changed
 // while an SPI interface is open.
 //
-// The CS pin may be either a DBUS pin or CBUS (GPIO) pin. If it is a DBUS pin,
-// then the MPSSE engine automatically handles CS assertion before and after
-// transfer, depending on the given flags start and stop. If it is a CBUS pin,
-// then the GPIO pin is automatically set and cleared depending on the given
-// flags start and stop. In both cases, the current value of the ActiveLow flag
-// determines if the CS line driven LOW (ActiveLow true, DEFAULT) or HIGH
-// (ActiveLow false) when asserting and then de-asserting.
+// The CS pin may be either a DPin or CPin (GPIO). If it is a DPin, then the
+// MPSSE engine automatically handles CS assertion before and after transfer,
+// depending on the given flags start and stop. If it is a CPin, then the GPIO
+// pin is automatically set and cleared depending on the given flags start and
+// stop. In both cases, the current value of the ActiveLow flag determines if
+// the CS line driven LOW (ActiveLow true, DEFAULT) or HIGH (ActiveLow false)
+// when asserting and then de-asserting.
 type SPIOption struct {
 	CS        Pin  // CS pin to assert when writing (can be DPin or CPin (GPIO))
 	ActiveLow bool // CS asserted "active" by driving pin LOW or HIGH
@@ -103,7 +103,7 @@ const (
 	spiModeDefault           = spiMode0
 )
 
-// Constants defining CS pins capable of using auto-assertion (DBUS pins only)
+// Constants defining CS pins capable of using auto-assertion (CPin only)
 const (
 	spiCSD3      spiOption = 0x00000000 // SPI CS on D3
 	spiCSD4      spiOption = 0x00000004 // SPI CS on D4
@@ -165,7 +165,7 @@ func (p DPin) spiOptionCS() spiOption {
 	}
 }
 
-// spiPinConfig represents the default direction and value for DBUS pins when
+// spiPinConfig represents the default direction and value for each DPin when
 // MPSSE is configured for SPI operation.
 type spiPinConfig struct {
 	initDir  byte // direction of lines after SPI channel initialization
@@ -189,11 +189,12 @@ func (p DPin) spiPin(cfg *spiPinConfig) uint32 {
 	}
 }
 
-// spiPinConfigDefault defines the default spiPinConfig value for all DBUS pins.
+// spiPinConfigDefault defines the default spiPinConfig value for each DPin.
 // all output pins are configured LOW except for the default CS pin (D3) since
 // we also have spiCSActiveLow by default. this means we won't activate the
 // default slave line until intended. it also means SCLK idles LOW (change
-// initVal to PinHI to idle HIGH).
+// initVal to PinHI to idle HIGH). All GPIO pins on this port are configured as
+// input LOW lines.
 func spiPinConfigDefault() uint32 {
 	var pin uint32
 	for i, cfg := range [NumDPins]*spiPinConfig{
@@ -201,10 +202,10 @@ func spiPinConfigDefault() uint32 {
 		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D1 MOSI
 		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D2 MISO
 		&spiPinConfig{initDir: PinOT, initVal: PinHI, closeDir: PinOT, closeVal: PinHI}, // D3 CS
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D4 GPIO
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D5 GPIO
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D6 GPIO
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D7 GPIO
+		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D4 GPIO
+		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D5 GPIO
+		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D6 GPIO
+		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D7 GPIO
 	} {
 		pin |= D(i).spiPin(cfg)
 	}

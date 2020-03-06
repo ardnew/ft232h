@@ -27,7 +27,7 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Index: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %+v }",
+	return fmt.Sprintf("{ Index: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %s }",
 		m.info, m.mode, m.I2C, m.SPI, m.GPIO)
 }
 

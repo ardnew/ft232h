@@ -1,5 +1,10 @@
 package ft232h
 
+import (
+	"fmt"
+	"strings"
+)
+
 // GPIO stores interface configuration settings for the GPIO ("C" port) and
 // provides methods for reading and writing to GPIO pins.
 // The GPIO interface is always initialized and available in any mode.
@@ -14,11 +19,38 @@ type GPIOConfig struct {
 	Val uint8
 }
 
+func (gpio *GPIO) String() string {
+
+	str := func(i int) string {
+		set := func(u uint8) bool {
+			return (u & (1 << i)) > 0
+		}
+		var dir, val string
+		if set(gpio.config.Dir) {
+			dir = "OUT"
+		} else {
+			dir = "INP"
+		}
+		if set(gpio.config.Val) {
+			val = "1"
+		} else {
+			val = "0"
+		}
+		return fmt.Sprintf("{%s:%s}", dir, val)
+	}
+
+	s := []string{}
+	for i := 0; i < NumCPins; i++ {
+		s = append(s, str(i))
+	}
+	return fmt.Sprintf("{ %s }", strings.Join(s, ", "))
+}
+
 // GPIOConfigDefault returns the default pin levels and directions for the GPIO
-// interface. All pins are configured as outputs at logic level LOW by default.
+// interface. All pins are configured as inputs at logic level LOW by default.
 func GPIOConfigDefault() *GPIOConfig {
 	return &GPIOConfig{
-		Dir: 0xFF, // each bit set, all pins OUTPUT by default
+		Dir: 0x00, // each bit clear, all pins INPUT by default
 		Val: 0x00, // each bit clear, all pins LOW by default
 	}
 }
