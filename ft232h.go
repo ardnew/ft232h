@@ -3,6 +3,7 @@ package ft232h
 import (
 	"fmt"
 	"math"
+	"math/bits"
 	"strconv"
 	"strings"
 )
@@ -125,22 +126,6 @@ func parseUint32(s string) (uint32, bool) {
 	}
 }
 
-// popcount returns the number of bits set in the first n bits (LSB) of u for n
-// less than or equal to 64.
-// returns 0 if n is less than 1.
-func popcount(u uint64, n int) int {
-	if n > 64 {
-		n = 64
-	}
-	c := 0
-	for i := 0; i < n; i++ {
-		if 1 == (u>>i)&1 {
-			c++
-		}
-	}
-	return c
-}
-
 // openDevice attempts to open the device matching the given mask, returning
 // a non-nil error if unsuccessful. The error SDeviceNotFound is returned if
 // no device was found matching the given mask. See NewFT232HWithMask for
@@ -254,10 +239,10 @@ func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
 func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
 
 // Valid is true if the pin bitmask has exactly one bit set, otherwise false.
-func (p DPin) Valid() bool { return 1 == popcount(uint64(p), NumDPins) }
+func (p DPin) Valid() bool { return 1 == bits.OnesCount64(uint64(p)) }
 
 // Valid is true if the pin bitmask has exactly one bit set, otherwise false.
-func (p CPin) Valid() bool { return 1 == popcount(uint64(p), NumCPins) }
+func (p CPin) Valid() bool { return 1 == bits.OnesCount64(uint64(p)) }
 
 // Equals is true if the given pin is on port "D" and has the same bitmask,
 // otherwise false.
@@ -379,4 +364,108 @@ func devices() ([]*deviceInfo, error) {
 	}
 
 	return info, nil
+}
+
+// AddrSpace represents the address space of a pointer. Intended to be used when
+// specifying e.g. I²C register addresses and the like.
+type AddrSpace uint8
+
+// Constants defining various address spaces.
+const (
+	Addr8Bit  AddrSpace = 1 << iota // 8-bit addresses
+	Addr16Bit                       // 16-bit addresses
+	Addr32Bit                       // 32-bit addresses
+	Addr64Bit                       // 64-bit addresses
+)
+
+// String returns a string representation of the address space.
+func (s AddrSpace) String() string {
+	return fmt.Sprintf("%d-bit", s.Bits())
+}
+
+// Bits returns the number of usable bits in an address space.
+func (s AddrSpace) Bits() uint {
+	switch s {
+	case Addr8Bit, Addr16Bit, Addr32Bit, Addr64Bit:
+		return s.Bytes() * 8
+	}
+	return 0
+}
+
+// Bytes returns the number of usable bytes in an address space.
+func (s AddrSpace) Bytes() uint {
+	switch s {
+	case Addr8Bit, Addr16Bit, Addr32Bit, Addr64Bit:
+		return uint(s)
+	}
+	return 0
+}
+
+// ByteOrder represents the byte order of a sequence of bytes.
+type ByteOrder uint8
+
+// Constants defining the supported byte orderings.
+const (
+	MSB ByteOrder = iota // most significant byte first (big endian)
+	LSB                  // least significant byte first (little endian)
+)
+
+// String returns a string representation of the byte order.
+func (o ByteOrder) String() string {
+	switch o {
+	case MSB:
+		return "MSB"
+	case LSB:
+		return "LSB"
+	default:
+		return "(invalid byte order)"
+	}
+}
+
+// Bytes converts the given value to an ordered slice of bytes. The receiver
+// value determines ordering, and the count argument defines slice length.
+func (o ByteOrder) Bytes(count uint, value uint64) []uint8 {
+
+	if count > 8 {
+		count = 8
+	}
+
+	b := make([]uint8, count)
+	for i := range b {
+		switch o {
+		case MSB:
+			b[i] = uint8((value >> ((count - uint(i) - 1) * 8)) & 0xFF)
+		case LSB:
+			b[i] = uint8((value >> (count * 8)) & 0xFF)
+		}
+	}
+	return b
+}
+
+// Uint converts a given slice of bytes to an unsigned integer. The receiver
+// value determines ordering, and the count argument defines the number of bytes
+// (starting from the beginning of the slice) to use for conversion. Cast the
+// value returned if a narrower type is required.
+func (o ByteOrder) Uint(count uint, bytes []uint8) uint64 {
+
+	if nil == bytes {
+		return 0
+	}
+	if count > 8 {
+		count = 8
+	}
+	if count > uint(len(bytes)) {
+		bytes = append(bytes, make([]uint8, count-uint(len(bytes)))...)
+	}
+
+	n := uint64(0)
+	for i, b := range bytes[:count] {
+		switch o {
+		case MSB:
+			n |= uint64(b) << ((count - uint(i) - 1) * 8)
+		case LSB:
+			n |= uint64(b) << (uint(i) * 8)
+		}
+	}
+	return n
 }

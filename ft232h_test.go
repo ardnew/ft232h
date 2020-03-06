@@ -343,3 +343,35 @@ func TestPin(t *testing.T) {
 		}
 	}
 }
+
+func TestAddrSpace(t *testing.T) {
+
+	for _, test := range []struct {
+		name  string
+		addr  AddrSpace
+		bits  uint
+		bytes uint
+	}{
+		{name: "AddrSpace(0)", addr: AddrSpace(0), bits: 0, bytes: 0},
+		{name: "Addr8Bit", addr: Addr8Bit, bits: 8, bytes: 1},
+		{name: "Addr16Bit", addr: Addr16Bit, bits: 16, bytes: 2},
+		{name: "Addr32Bit", addr: Addr32Bit, bits: 32, bytes: 4},
+		{name: "Addr64Bit", addr: Addr64Bit, bits: 64, bytes: 8},
+		{name: "AddrSpace(1<<5)", addr: AddrSpace(1 << 4), bits: 0, bytes: 0},
+	} {
+		t.Run(fmt.Sprintf("%s={%d}", test.name, test.addr),
+			func(s *testing.T) {
+
+				if test.addr.Bits() != test.bits {
+					s.Fatalf("address space={%d} bits={%d}, expecting={%d}",
+						test.addr, test.addr.Bits(), test.bits)
+				}
+
+				if test.addr.Bytes() != test.bytes {
+					s.Fatalf("address space={%d} bytes={%d}, expecting={%d}",
+						test.addr, test.addr.Bytes(), test.bytes)
+				}
+			})
+	}
+
+}

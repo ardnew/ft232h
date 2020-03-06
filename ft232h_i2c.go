@@ -2,7 +2,7 @@ package ft232h
 
 import (
 	"fmt"
-	"log"
+	"math/bits"
 )
 
 // I2C stores interface configuration settings for an I²C master and provides
@@ -281,17 +281,17 @@ func (i2c *I2C) Close() error {
 }
 
 // Read reads the given count number of bytes from the I²C interface.
-// The given address is the unshifted 7-bit I²C slave address to read from.
+// The given slave is the unshifted 7-bit I²C slave address to read from.
 // There is no maximum length for the number of bytes to read.
 // If start is true, an I²C start condition is generated before transfer.
 // If stop is true, an I²C stop condition is generated after transfer.
 // Returns the slice of bytes successfully read and a non-nil error if there was
 // an error.
-func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, error) {
+func (i2c *I2C) Read(slave uint, count uint, start bool, stop bool) ([]uint8, error) {
 
-	if !(addr >= I2CSlaveAddressMin && addr <= I2CSlaveAddressMax) {
+	if !(slave >= I2CSlaveAddressMin && slave <= I2CSlaveAddressMax) {
 		return nil, fmt.Errorf("invalid slave address (0x%02X-0x%02X): 0x%02X",
-			I2CSlaveAddressMin, I2CSlaveAddressMax, addr)
+			I2CSlaveAddressMin, I2CSlaveAddressMax, slave)
 	}
 
 	opt := i2cXferDefault
@@ -319,22 +319,21 @@ func (i2c *I2C) Read(addr uint, count uint, start bool, stop bool) ([]uint8, err
 		}
 	}
 
-	log.Printf("<<<<<< [%02X, {%+v}, {%032b}]", addr, count, opt)
-	return _I2C_Read(i2c, addr, count, opt)
+	return _I2C_Read(i2c, slave, count, opt)
 }
 
 // Write writes the given byte slice data to the I²C interface.
-// The given address is the unshifted 7-bit I²C slave address to write to.
+// The given slave is the unshifted 7-bit I²C slave address to write to.
 // There is no maximum length for the data slice.
 // If start is true, an I²C start condition is generated before transfer.
 // If stop is true, an I²C stop condition is generated after transfer.
 // Returns the slice of bytes successfully written and a non-nil error if there
 // was an error.
-func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, error) {
+func (i2c *I2C) Write(slave uint, data []uint8, start bool, stop bool) (uint, error) {
 
-	if !(addr >= I2CSlaveAddressMin && addr <= I2CSlaveAddressMax) {
+	if !(slave >= I2CSlaveAddressMin && slave <= I2CSlaveAddressMax) {
 		return 0, fmt.Errorf("invalid slave address (0x%02X-0x%02X): 0x%02X",
-			I2CSlaveAddressMin, I2CSlaveAddressMax, addr)
+			I2CSlaveAddressMin, I2CSlaveAddressMax, slave)
 	}
 
 	opt := i2cXferDefault
@@ -359,6 +358,99 @@ func (i2c *I2C) Write(addr uint, data []uint8, start bool, stop bool) (uint, err
 		}
 	}
 
-	log.Printf(">>>>>> [%02X, {%+v}, {%032b}]", addr, data, opt)
-	return _I2C_Write(i2c, addr, data, opt)
+	return _I2C_Write(i2c, slave, data, opt)
+}
+
+// I2CReg represents a read-write register of an I²C slave device.
+type I2CReg struct {
+	i2c   *I2C      // the I²C interface to use
+	slave uint      // unshifted 7-bit I²C slave address
+	addr  uint      // register sub-address to read/write
+	space AddrSpace // sub-address space used to format register in data payload
+	order ByteOrder // byte order used to format register+data in data payload
+}
+
+// I2CRegReader represents a method for reading I²C slave device registers.
+type I2CRegReader func(rewrite bool) (uint64, error)
+
+// validate checks that fields of an I2CReg pass basic sanity requirements.
+// Returns the byte-ordered register sub-address to send in read/write payloads.
+func (reg *I2CReg) validate() ([]uint8, error) {
+
+	if nil == reg {
+		return nil, fmt.Errorf("invalid receiver (nil)")
+	}
+
+	if !(reg.slave >= I2CSlaveAddressMin && reg.slave <= I2CSlaveAddressMax) {
+		return nil, fmt.Errorf("invalid I²C slave address (0x%02X-0x%02X): 0x%02X",
+			I2CSlaveAddressMin, I2CSlaveAddressMax, reg.slave)
+	}
+
+	b := reg.space.Bytes()
+	if 0 == b {
+		return nil, fmt.Errorf("invalid sub-address space: %d", reg.space)
+	}
+
+	if bits.Len(reg.addr) > bits.Len(1<<(reg.space.Bits()-1)) {
+		return nil, fmt.Errorf("register sub-address outside %s address space: 0x%02X",
+			reg.space, reg.addr)
+	}
+
+	r := reg.order.Bytes(b, uint64(reg.addr))
+	if 0 == len(r) {
+		return nil, fmt.Errorf("invalid byte order: %d", reg.order)
+	}
+
+	return r, nil
+}
+
+// Reg constructs a new I2CReg for conveniently reading and writing data in I²C
+// slave device registers.
+func (i2c *I2C) Reg(slave uint, addr uint, space AddrSpace, order ByteOrder) *I2CReg {
+	return &I2CReg{
+		i2c:   i2c,
+		slave: slave,
+		addr:  addr,
+		space: space,
+		order: order,
+	}
+}
+
+// Reader returns a closure that can be used to repeatedly read from a register.
+// The size argument defines the number of bytes to read, i.e. the size of the
+// data read from the register, often 2 (16-bit); it is also used along with the
+// I2CReg byte order to format the value returned by the closure.
+//
+// The returned closure accepts a single argument rewrite that if true will
+// reposition the register pointer to the receiver's register address, which is
+// necessary when reading/writing multiple registers; otherwise, false, reads
+// will occur much faster without having to reposition every time.
+// The byte order given to the Reg() constructor is used to format the value
+// returned when calling the closure.
+func (reg *I2CReg) Reader(size uint) (I2CRegReader, error) {
+
+	addr, err := reg.validate()
+	if nil != err {
+		return nil, err
+	}
+
+	if _, err := reg.i2c.Write(reg.slave, addr, true, false); nil != err {
+		return nil, err
+	}
+
+	return func(rewrite bool) (uint64, error) {
+
+		if rewrite {
+			if _, err := reg.i2c.Write(reg.slave, addr, true, false); nil != err {
+				return 0, err
+			}
+		}
+
+		if dat, err := reg.i2c.Read(reg.slave, size, true, true); nil != err {
+			return 0, err
+		} else {
+			return reg.order.Uint(size, dat), nil
+		}
+
+	}, nil
 }
