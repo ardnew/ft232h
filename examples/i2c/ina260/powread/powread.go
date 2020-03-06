@@ -25,9 +25,9 @@ const (
 func main() {
 
 	// open the FT232H
-	ft, err := ft232h.NewFT232HWithDesc("FT232H-C")
+	ft, err := ft232h.NewFT232H()
 	if nil != err {
-		log.Fatalf("NewFT232HWithDesc(): %s", err)
+		log.Fatalf("NewFT232H(): %s", err)
 	}
 	defer ft.Close()
 	log.Printf("%s", ft)
