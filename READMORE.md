@@ -81,7 +81,7 @@ import (
 )
 
 func main() {
-	// open the fist MPSSE-capable USB device found
+	// open the first device found, matching all command-line flags if provided
 	ft, err := ft232h.NewFT232H()
 	if nil != err {
 		log.Fatalf("NewFT232H(): %s", err)
@@ -94,24 +94,28 @@ func main() {
 ```
 I'm sure that was very helpful.
 
+#### Design
+The design of this module API was intended to marry the following principles, ordered by importance:
+1. **Simple / Concise** – Clear, consistent, conventional behavior
+   - Transparent infrastructure, automatic configuration to service methods
+   - Minimize subtleties and unapparent side-effects (or document those that exist, are inherent)
+   - Prefer Go native or simple composite types
+   - Modular protocol-based architecture
+   - Integrated command-line flag support
+2. **Robust / General Purpose** – Maximize peripheral device support
+   - Clear, descriptive error messages for invalid configurations
+   - Low-level device methods, flexible high-level protocol methods
+   - Integration test every revision automatically
+   - Correct behavior at edge cases
+3. **Performant / Efficient** – Utilize host and device resources effectively
+   - Minimize USB transactions and HID interframe delays
+   - Maximize throughput of serial protocol transfers
+
 ## Peripheral devices
 #### Getting started
 The great thing about the FT232H is being able to communicate with the plethora of GPIO and serial peripheral devices – which usually require the hardware interfaces found on low-power microcontrollers – with nothing but a USB cable directly from your PC.
 
 However, the official device drivers required to control the FT232H are quite complex and require an understanding of microcontroller programming in C. This `ft232h` module greatly simplifies that programming interface, bridging many of those peripherals with the native Go ecosystem of common PCs.
-
-The design of this module API was intended to marry the following principles, ordered by importance: 
-1. **Simple** – Clear, conventional behavior
-   - Minimize subtleties and unapparent side-effects (or document those that exist, are inherent)
-   - Clear, descriptive error messages
-2. **Robust / General-purpose** – Maximize peripheral device support
-   - Safely handle edge cases, invalid parameters
-   - Low-level device methods
-   - Flexible high-level protocol methods
-3. **Concise** – Short, consistent, easy-to-remember types and method signatures
-   - Transparent infrastructure
-   - Automatically configure device to service methods
-   - Minimize namespace exports, only expose needed fields
 
 Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details.
 
