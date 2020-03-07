@@ -2,11 +2,15 @@
 [docurl]:https://godoc.org/github.com/ardnew/ft232h
 [cciimg]:https://circleci.com/gh/ardnew/ft232h.svg?style=shield
 [cciurl]:https://circleci.com/gh/ardnew/ft232h
+[repimg]:https://goreportcard.com/badge/github.com/ardnew/ft232h
+[repurl]:https://goreportcard.com/report/github.com/ardnew/ft232h
 
 # ft232h
 ### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
-[![GoDoc][docimg]][docurl] [![CircleCI][cciimg]][cciurl]
+[![GoDoc][docimg]][docurl] [![CircleCI][cciimg]][cciurl] [![Go Report Card][repimg]][repurl]
+
+ 
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
