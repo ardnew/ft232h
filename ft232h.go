@@ -27,10 +27,6 @@ type FT232H struct {
 	GPIO *GPIO
 }
 
-// OpenArgs contains the tokenized words to be parsed when opening an FT232H
-// device with NewFT232H. If not specified, then os.Args[1:] is used.
-var OpenArgs []string
-
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
 	return fmt.Sprintf("{ Index: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %s }",
@@ -38,26 +34,25 @@ func (m *FT232H) String() string {
 }
 
 // NewFT232H attempts to open a connection with the first MPSSE-capable USB
-// device specified with command-line style args, returning a non-nil error if
-// unsuccessful. Uses the actual command-line if package variable OpenArgs is
-// not defined.
+// device matching the flags given at the command-line. Use -h to see all of the
+// supported flags.
 func NewFT232H() (*FT232H, error) {
-	args := os.Args[1:]
-	if nil != OpenArgs {
-		args = OpenArgs
+	if len(os.Args) > 1 {
+		return NewFT232HWithArgs(os.Args[1:])
+	} else {
+		// in case there is some way to reach this point with an os.Args slice with
+		// insufficient length, just open first device found.
+		return NewFT232HWithMask(nil)
 	}
-	return NewFT232HWithArgs(args)
 }
 
 // NewFT232HWithArgs attempts to open a connection with the first MPSSE-capable
-// USB device parsed from the string slice of command-line style flags.
+// USB device matching the flags given in the command-line-style string slice.
 // See type OpenFlag for details.
 func NewFT232HWithArgs(arg []string) (*FT232H, error) {
-	o := NewOpenFlag(flag.ContinueOnError)
+	o := NewOpenFlag(flag.ExitOnError)
 	if len(arg) > 0 {
-		if err := o.Parse(arg); nil != err {
-			return nil, err
-		}
+		_ = o.Parse(arg)
 	}
 	return NewFT232HWithMask(o.OpenMask())
 }
@@ -131,7 +126,7 @@ type OpenMask struct {
 }
 
 // OpenFlag contains the attributes used to identify an FT232H device to open
-// from a string slice with command-line style flags.
+// from a command-line-style string slice.
 type OpenFlag struct {
 	flag   *flag.FlagSet
 	index  *int
@@ -154,11 +149,11 @@ func NewOpenFlag(han flag.ErrorHandling) *OpenFlag {
 	f := flag.NewFlagSet(flagSetName, han)
 	return &OpenFlag{
 		flag:   f,
-		index:  f.Int("index", indexDefault, "open device enumerated at index `N` (int)"),
-		vid:    f.Int("vid", vidDefault, "open device with vendor ID `VID` (int)"),
-		pid:    f.Int("pid", pidDefault, "open device with product ID `PID` (int)"),
-		serial: f.String("serial", serialDefault, "open device with identifier `SER` (string)"),
-		desc:   f.String("desc", descDefault, "open device with description `DSC` (string)"),
+		index:  f.Int("index", indexDefault, "open device enumerated at index `N` ≥ 0"),
+		vid:    f.Int("vid", vidDefault, "open device with vendor ID"),
+		pid:    f.Int("pid", pidDefault, "open device with product ID"),
+		serial: f.String("serial", serialDefault, "open device with identifier"),
+		desc:   f.String("desc", descDefault, "open device with description"),
 	}
 }
 
