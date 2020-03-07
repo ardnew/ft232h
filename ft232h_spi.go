@@ -198,14 +198,14 @@ func (p DPin) spiPin(cfg *spiPinConfig) uint32 {
 func spiPinConfigDefault() uint32 {
 	var pin uint32
 	for i, cfg := range [NumDPins]*spiPinConfig{
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D0 SCLK
-		&spiPinConfig{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D1 MOSI
-		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D2 MISO
-		&spiPinConfig{initDir: PinOT, initVal: PinHI, closeDir: PinOT, closeVal: PinHI}, // D3 CS
-		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D4 GPIO
-		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D5 GPIO
-		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D6 GPIO
-		&spiPinConfig{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D7 GPIO
+		{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D0 SCLK
+		{initDir: PinOT, initVal: PinLO, closeDir: PinOT, closeVal: PinLO}, // D1 MOSI
+		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D2 MISO
+		{initDir: PinOT, initVal: PinHI, closeDir: PinOT, closeVal: PinHI}, // D3 CS
+		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D4 GPIO
+		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D5 GPIO
+		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D6 GPIO
+		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D7 GPIO
 	} {
 		pin |= D(i).spiPin(cfg)
 	}
