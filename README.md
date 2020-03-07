@@ -1,16 +1,19 @@
+[docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
+[docurl]:https://godoc.org/github.com/ardnew/ft232h
+[cciimg]:https://circleci.com/gh/ardnew/ft232h.svg?style=shield
+[cciurl]:https://circleci.com/gh/ardnew/ft232h
+
 ## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
 
 # ft232h
 ### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
 [![GoDoc][docimg]][docurl]
-
-[docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
-[docurl]:https://godoc.org/github.com/ardnew/ft232h
+[![CircleCI][cciimg]][cciurl]
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
-- [x] [**Documentation**](https://godoc.org/github.com/ardnew/ft232h)
+- [x] [**Documented**][docurl] and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
@@ -82,4 +85,4 @@ Of course the FT232H isn't that useful without a device to interact with. You wi
 
 A basic [driver for the ILI9341 TFT LCD](drv/ili9341) using `ft232h.SPI` and `ft232h.GPIO` – along with a [demo application](examples/spi/ili9341/boing) drawing an animated bouncing ball – has been created to serve as a reference implementation.
 
-For more details, be sure to read the `Peripheral devices` section  in [`READMORE`](READMORE.md) and, of course, the [godoc](https://godoc.org/github.com/ardnew/ft232h) for this `ft232h` module.
+For more details, be sure to read the `Peripheral devices` section  in [`READMORE`](READMORE.md) and, of course, the [godoc][docurl] for this `ft232h` module.
