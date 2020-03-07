@@ -5,7 +5,7 @@
 [repimg]:https://goreportcard.com/badge/github.com/ardnew/ft232h
 [repurl]:https://goreportcard.com/report/github.com/ardnew/ft232h
 
-## **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
+> **This is a brief summary. See [`READMORE`](READMORE.md) for the complete overview.**
 
 # ft232h
 ### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
