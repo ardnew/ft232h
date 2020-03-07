@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -79,6 +80,57 @@ func TestNewFT232H(t *testing.T) {
 			t.Fatalf("opened device with -nodevice set")
 		}
 
+	}
+}
+
+func TestNewFT232HWithArgs(t *testing.T) {
+
+	for _, test := range []struct {
+		name string
+		args []string
+		open bool // true if expecting device to open successfully
+	}{
+		// index
+		{name: "selectedIndex", args: []string{"-index", fmt.Sprintf("%d", optIndex)}, open: !optNoDevice},
+		{name: "invalidIndex", args: []string{"-index", "0xBADC0DE"}, open: false},
+		// VID/PID
+		{name: "selectedVIDPID", args: []string{"-vid", fmt.Sprintf("%d", optVID), "-pid", fmt.Sprintf("%d", optPID)}, open: !optNoDevice},
+		{name: "invalidVID", args: []string{"-vid", "0xBAD", "-pid", fmt.Sprintf("%d", optPID)}, open: false},
+		{name: "invalidPID", args: []string{"-vid", fmt.Sprintf("%d", optVID), "-pid", "0xC0DE"}, open: false},
+		{name: "invalidVIDPID", args: []string{"-vid", "0xBAD", "-pid", "0xC0DE"}, open: false},
+		// serial
+		{name: "selectedSerial", args: []string{"-serial", optSerial}, open: !optNoDevice},
+		{name: "emptySerial", args: []string{"-serial", ""}, open: !optNoDevice},
+		{name: "randomSerial", args: []string{"-serial", randString(16)}, open: false},
+		// description
+		{name: "selectedDesc", args: []string{"-desc", optDesc}, open: !optNoDevice},
+		{name: "emptyDesc", args: []string{"-desc", ""}, open: !optNoDevice},
+		{name: "randomDesc", args: []string{"-desc", randString(64)}, open: false},
+	} {
+		t.Run(fmt.Sprintf("%s=[%+v]", test.name, strings.Join(test.args, ",")),
+			func(s *testing.T) {
+				ft, err := NewFT232HWithArgs(test.args, flag.ContinueOnError)
+				if test.open {
+					if nil == err { // success
+						if err := ft.Close(); nil != err {
+							s.Fatalf("could not close device with args=[%+v]: %v", strings.Join(test.args, ","), err)
+						}
+					} else { // fail
+						s.Fatalf("could not open device with args=[%+v]: %v", strings.Join(test.args, ","), err)
+					}
+				} else {
+					if nil == err { // fail
+						ft.Close()
+						if optNoDevice {
+							s.Fatalf("opened device with args=[%+v] with -nodevice set", strings.Join(test.args, ","))
+						} else {
+							s.Fatalf("opened device with args=[%+v]", strings.Join(test.args, ","))
+						}
+					} else { // success
+						// empty
+					}
+				}
+			})
 	}
 }
 

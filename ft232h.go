@@ -3,6 +3,7 @@ package ft232h
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"math/bits"
 	"os"
@@ -34,23 +35,29 @@ func (m *FT232H) String() string {
 }
 
 // NewFT232H attempts to open a connection with the first MPSSE-capable USB
-// device matching the flags given at the command-line. Use -h to see all of the
-// supported flags.
+// device matching flags given at the command-line. Use -h to see all of the
+// supported flags. Calls os.Exit if the flags could not be parsed (unless the
+// command-line was successfully parsed elsewhere prior to reaching here; in
+// which case, attempt to open the first device found).
 func NewFT232H() (*FT232H, error) {
-	if len(os.Args) > 1 {
-		return NewFT232HWithArgs(os.Args[1:])
-	} else {
-		// in case there is some way to reach this point with an os.Args slice with
-		// insufficient length, just open first device found.
+	han := flag.ExitOnError
+	// if the flags have already been parsed (e.g. by `go test`), and it didn't
+	// cause an error, don't call os.Exit if our parser then fails.
+	if flag.Parsed() {
+		han = flag.ContinueOnError
+	}
+	if f, e := NewFT232HWithArgs(os.Args[1:], han); flag.ErrHelp == e {
 		return NewFT232HWithMask(nil)
+	} else {
+		return f, e
 	}
 }
 
 // NewFT232HWithArgs attempts to open a connection with the first MPSSE-capable
 // USB device matching the flags given in the command-line-style string slice.
 // See type OpenFlag for details.
-func NewFT232HWithArgs(arg []string) (*FT232H, error) {
-	o := NewOpenFlag(flag.ExitOnError)
+func NewFT232HWithArgs(arg []string, han flag.ErrorHandling) (*FT232H, error) {
+	o := NewOpenFlag(han)
 	if len(arg) > 0 {
 		_ = o.Parse(arg)
 	}
@@ -139,7 +146,7 @@ type OpenFlag struct {
 // NewOpenFlag constructs a new OpenFlag with given ErrorHandling mode.
 func NewOpenFlag(han flag.ErrorHandling) *OpenFlag {
 	const (
-		flagSetName   string = "FT232H flags"
+		flagSetName   string = "FT232H open flags"
 		indexDefault  int    = 0
 		vidDefault    int    = 0x0403
 		pidDefault    int    = 0x6014
@@ -160,8 +167,8 @@ func NewOpenFlag(han flag.ErrorHandling) *OpenFlag {
 // Parse parses the flags from the given slice of strings arg into the fields of
 // the receiver.
 func (o *OpenFlag) Parse(arg []string) error {
-	if nil == arg || len(arg) == 0 {
-		return flag.ErrHelp
+	if o.flag.ErrorHandling() == flag.ContinueOnError {
+		o.flag.SetOutput(ioutil.Discard)
 	}
 	if err := o.flag.Parse(arg); nil != err {
 		return err
@@ -189,32 +196,6 @@ func (o *OpenFlag) OpenMask() *OpenMask {
 		}
 	})
 	return m
-}
-
-// parseUint32 attempts to convert a given string to a 32-bit unsigned integer,
-// returning zero and false if the string is empty, negative, or otherwise
-// invalid.
-// The string can be expressed in various bases, following the convention of
-// Go's strconv.ParseUint with base = 0, bitSize = 32.
-// The only exception is when the string contains hexadecimal chars and doesn't
-// begin with the required prefix "0x". In this case, the "0x" prefix is added
-// automatically.
-func parseUint32(s string) (uint32, bool) {
-	s = strings.TrimSpace(strings.ToLower(s))
-	if s == "" {
-		return 0, false
-	}
-	// ParseUint requires a leading "0x" for base 16
-	if strings.ContainsAny(s, "abcdef") && !strings.HasPrefix(s, "0b") {
-		s = "0x" + strings.TrimPrefix(s, "0x") // always prefix (but not twice!)
-	}
-	// now parse according to Go convention
-	i, err := strconv.ParseInt(s, 0, 64)
-	if nil != err || i < 0 || i > math.MaxUint32 {
-		return 0, false
-	} else {
-		return uint32(i), true
-	}
 }
 
 // openDevice attempts to open the device matching the given mask, returning
@@ -455,6 +436,32 @@ func devices() ([]*deviceInfo, error) {
 	}
 
 	return info, nil
+}
+
+// parseUint32 attempts to convert a given string to a 32-bit unsigned integer,
+// returning zero and false if the string is empty, negative, or otherwise
+// invalid.
+// The string can be expressed in various bases, following the convention of
+// Go's strconv.ParseUint with base = 0, bitSize = 32.
+// The only exception is when the string contains hexadecimal chars and doesn't
+// begin with the required prefix "0x". In this case, the "0x" prefix is added
+// automatically.
+func parseUint32(s string) (uint32, bool) {
+	s = strings.TrimSpace(strings.ToLower(s))
+	if s == "" {
+		return 0, false
+	}
+	// ParseUint requires a leading "0x" for base 16
+	if strings.ContainsAny(s, "abcdef") && !strings.HasPrefix(s, "0b") {
+		s = "0x" + strings.TrimPrefix(s, "0x") // always prefix (but not twice!)
+	}
+	// now parse according to Go convention
+	i, err := strconv.ParseInt(s, 0, 64)
+	if nil != err || i < 0 || i > math.MaxUint32 {
+		return 0, false
+	} else {
+		return uint32(i), true
+	}
 }
 
 // AddrSpace represents the address space of a pointer. Intended to be used when
