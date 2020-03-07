@@ -1,14 +1,16 @@
+[docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
+[docurl]:https://godoc.org/github.com/ardnew/ft232h
+[cciimg]:https://circleci.com/gh/ardnew/ft232h.svg?style=shield
+[cciurl]:https://circleci.com/gh/ardnew/ft232h
+
 # ft232h
 ### Go module for [FTDI FT232H](https://www.ftdichip.com/Products/ICs/FT232H.htm) USB to GPIO/SPI/I²C/JTAG/UART protocol converter
 
-[![GoDoc][docimg]][docurl]
-
-[docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
-[docurl]:https://godoc.org/github.com/ardnew/ft232h
+[![GoDoc][docimg]][docurl] [![CircleCI][cciimg]][cciurl]
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
-- [x] [**Documentation**](https://godoc.org/github.com/ardnew/ft232h)
+- [x] [**Documented**][docurl] and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
