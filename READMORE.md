@@ -100,19 +100,31 @@ The great thing about the FT232H is being able to communicate with the plethora 
 
 However, the official device drivers required to control the FT232H are quite complex and require an understanding of microcontroller programming in C. This `ft232h` module greatly simplifies that programming interface, bridging many of those peripherals with the native Go ecosystem of common PCs.
 
+The design of this module API was intended to marry the following principles, ordered by importance: 
+1. **Simple** – Clear, conventional behavior
+   - Minimize subtleties and unapparent side-effects (or document those that exist, are inherent)
+   - Clear, descriptive error messages
+2. **Robust / General-purpose** – Maximize peripheral device support
+   - Safely handle edge cases, invalid parameters
+   - Low-level device methods
+   - Flexible high-level protocol methods
+3. **Concise** – Short, consistent, easy-to-remember types and method signatures
+   - Transparent infrastructure
+   - Automatically configure device to service methods
+   - Minimize namespace exports, only expose needed fields
+
 Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details.
 
 You can create a new driver package under [`drv/`](drv) to encapsulate and reuse the definitions and procedures provided by the peripheral device, or you can simply interact with the FT232H interfaces directly from your application.
 
-To demonstrate this, a basic driver package [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) was created to drive an ILI9341 320x240 TFT LCD using the `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
+#### Peripheral device driver examples
+To demonstrate the API, a basic driver package [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) was created to drive an ILI9341 320x240 TFT LCD using the `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
 
 These methods alone were sufficient to implement the other half of the demonstration – an example application [`boing`](examples/spi/ili9341/boing) using the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver.
 - This application was a port of the [tinygo project](https://tinygo.org/)'s ILI9341 device driver example [`pyportal_boing`](https://github.com/tinygo-org/drivers/tree/master/examples/ili9341/pyportal_boing)
   - And this was in turn a port of Adafruit's [original Arduino demo](https://github.com/adafruit/Adafruit_ILI9341/tree/master/examples/pyportal_boing) released for their PyPortal
 
-So to get started, please review the [`github.com/ardnew/ft232h/drv/ili9341`](drv/ili9341) driver and [`boing`](examples/spi/ili9341/boing) application for details on how this `ft232h` Go module is intended for use, which should also help you become familiar with the API and general architecture.
-
-The design was intended to be as concise and general-purpose as possible, to not litter the namespace with subtleties, yet low-level enough to wield some _Real Power_.
+These examples demonstrate how this `ft232h` Go module is intended to be used and should help you become familiar with the API and general architecture.
 
 In the mean-time, **_[hold on to your butts](https://www.youtube.com/watch?v=-W6as8oVcuM)_**, and watch the above mentioned `ili9341` driver package with `boing` application in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running straight from my desktop!
 
