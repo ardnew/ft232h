@@ -15,7 +15,7 @@ The Go module uses [`cgo`](https://golang.org/cmd/cgo/) to automatically link ag
 This all happens internally so that applications importing the `ft232h` Go module do not have to explicitly use or specify the native drivers to use. The module and native drivers are built directly into the resulting Go application.
 
 #### File structure for native drivers
-All of the C software related to the native drivers `libft232h`, `libMPSSE`, and `D2XX` is contained underneath [`github.com/ardnew/ft232h/native/`](https://github.com/ardnew/ft232h/native). This includes both the source code required for building and the compiled executable code used by the `ft232h` Go module at compile-time. The files are organized as follows:
+All of the C software related to the native drivers `libft232h`, `libMPSSE`, and `D2XX` is contained underneath [`github.com/ardnew/ft232h/native/`](.). This includes both the source code required for building and the compiled executable code used by the `ft232h` Go module at compile-time. The files are organized as follows:
 ```sh
 └── native/
     ├── lib/ # Pre-compiled libft232h.a libraries ...
@@ -41,5 +41,5 @@ The default target (`build`) also copies the compiled `libft232h.a` to the appro
 ###### Building `libft232h` for other platforms
 To support other platforms, you will need to make sure FTDI releases `D2XX` for that platform. You can view and download [official releases from **here**](https://www.ftdichip.com/Drivers/D2XX.htm). Once downloaded, you will want to copy the included static library to a subdirectory of `native/src/$(os)-$(arch)/libftd2xx/$(version)`, following existing convention, and add/update the various `$(*ftd2xx*)` definitions – as well as any necessary `CFLAGS` and `LDFLAGS` – in the `Makefile`.
 
-After compiling and installing the `libft232h.a` static library, you will also need to update the `ft232h` Go module source file [`native_bridge.go`](https://github.com/ardnew/ft232h/native_bridge.go). The `cgo` preamble at the top of this file needs to include a valid, build-constrained, `-L<path>` option in `LDFLAGS` pointing to the path of your target's compiled `libft232h.a` static library. See the other supported targets in that file for examples.
+After compiling and installing the `libft232h.a` static library, you will also need to update the `ft232h` Go module source file [`native_bridge.go`](../native_bridge.go). The `cgo` preamble at the top of this file needs to include a valid, build-constrained, `-L<path>` option in `LDFLAGS` pointing to the path of your target's compiled `libft232h.a` static library. See the other supported targets in that file for examples.
 

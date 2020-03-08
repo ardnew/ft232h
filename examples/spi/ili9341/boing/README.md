@@ -2,7 +2,7 @@
 
 > **[Hold on to your butts](https://www.youtube.com/watch?v=-W6as8oVcuM)**
 
-This example uses the provided [`github.com/ardnew/ft232h/drv/ili9341`](https://github.com/ardnew/ft232h/drv/ili9341) ILI9341 TFT LCD driver package in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running on a desktop PC!
+This example uses the provided [`github.com/ardnew/ft232h/drv/ili9341`](../../../../drv/ili9341) ILI9341 TFT LCD driver package in full glorious 320x240 16-bit RGB @ 42.67 FPS over 30 MHz SPI – all written in standard Go running on a desktop PC!
 
 <p align=center>
         <a href="https://www.youtube.com/watch?v=H-9oN2VmrUw">

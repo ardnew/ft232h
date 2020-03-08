@@ -85,7 +85,7 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 
 ## Examples
 
-Demo applications using this module and its device drivers can be found in [`examples/`](https://github.com/ardnew/ft232h/examples).
+Demo applications using this module and its device drivers can be found in [`examples/`](examples).
 
 Usage examples for the API can be found in the godoc [package documentation][docurl].
 
