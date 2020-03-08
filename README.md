@@ -80,8 +80,8 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 |     Package    |          godoc           |                    Markdown                     |
 |:--------------:|:------------------------:|:-----------------------------------------------:|
 |       API      |[![GoDoc][docimg]][docurl]|   [README](https://github.com/ardnew/ft232h)    |
-| Device Drivers |[![GoDoc][drvimg]][drvurl]| [README](https://github.com/ardnew/ft232h/drv)  |
-|   FTDI Drivers |[![GoDoc][ntvimg]][ntvurl]|[README](https://github.com/ardnew/ft232h/native)|
+| Device Drivers |[![GoDoc][drvimg]][drvurl]|                  [README](drv)                  |
+|   FTDI Drivers |[![GoDoc][ntvimg]][ntvurl]|                 [README](native)                |
 
 ## Examples
 
