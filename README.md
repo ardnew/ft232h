@@ -71,45 +71,8 @@ sudo rmmod ftdi_sio
 Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `D2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
 ## Usage
-> The obligatory ~~useless~~basic example
-
-Simply import the module and open the device:
-```go
-import (
-  "log"
-  "github.com/ardnew/ft232h"
-)
-
-func main() {
-  // open the first device found, matching all command-line flags if provided
-  ft, err := ft232h.NewFT232H()
-  if nil != err {
-    log.Fatalf("NewFT232H(): %s", err)
-  }
-  defer ft.Close() // be sure to close device
-
-  // do stuff
-  log.Printf("doing stuff with device: %s", ft)
-}
-```
-I'm sure that was very helpful.
 
 #### Design
-The design of this module API was intended to marry the following principles, ordered by importance:
-1. **Simple / Concise** – Clear, consistent, conventional behavior
-   - Transparent infrastructure, automatic configuration to service methods
-   - Minimize subtleties and unapparent side-effects (or document those that exist, are inherent)
-   - Prefer Go native or simple composite types
-   - Modular protocol-based architecture
-   - Integrated command-line flag support
-2. **Robust / General Purpose** – Maximize peripheral device support
-   - Clear, descriptive error messages for invalid configurations
-   - Low-level device methods, flexible high-level protocol methods
-   - Integration test every revision automatically
-   - Correct behavior at edge cases
-3. **Performant / Efficient** – Utilize host and device resources effectively
-   - Minimize USB transactions and HID interframe delays
-   - Maximize throughput of serial protocol transfers
 
 ## Peripheral devices
 

@@ -33,7 +33,7 @@ Running `make` without any arguments will build `libft232h.a` for the default pl
 The default target (`build`) also copies the compiled `libft232h.a` to the appropriate directory required by `cgo` on success, and should be all you need for the `ft232h` Go module to use the rebuilt library.
 
 ###### Building `libft232h` for other platforms
-To support other platforms, you will need to make sure FTDI releases `D2XX` for that platform. You can view and download [official releases from **here**](https://www.ftdichip.com/Drivers/D2XX.htm). Once downloaded, you will want to copy the included static library to a subdirectory of `native/src/<$(os)>-$(arch)`, following existing convention, and add/update the various `$(*ftd2xx*)` definitions – as well as any necessary `CFLAGS` and `LDFLAGS` – in the `Makefile`.
+To support other platforms, you will need to make sure FTDI releases `D2XX` for that platform. You can view and download [official releases from **here**](https://www.ftdichip.com/Drivers/D2XX.htm). Once downloaded, you will want to copy the included static library to a subdirectory of `native/src/$(os)-$(arch)/libftd2xx/$(version)`, following existing convention, and add/update the various `$(*ftd2xx*)` definitions – as well as any necessary `CFLAGS` and `LDFLAGS` – in the `Makefile`.
 
 After compiling and installing the `libft232h.a` static library, you will also need to update the `ft232h` Go module source file [`native_bridge.go`](https://github.com/ardnew/ft232h/native_bridge.go). The `cgo` preamble at the top of this file needs to include a valid, build-constrained, `-L<path>` option in `LDFLAGS` pointing to the path of your target's compiled `libft232h.a` static library. See the other supported targets in that file for examples.
 

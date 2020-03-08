@@ -14,10 +14,11 @@ import (
 // FT232H is the primary type for interacting with the device, holding the USB
 // device file descriptor configuration/status and individual communication
 // interfaces.
-// Open a connection with an FT232H by calling the NewFT232H constructor.
+// Open a connection with an FT232H by calling the NewFT232H() constructor.
 // If more than one FTDI device (any FTDI device, not just FT232H) is present on
-// the system, there are several constructor variations of form NewFT232HWith*
-// to help distinguish which device to open.
+// the system, there are several constructor variations of form NewFT232HWith*()
+// to help distinguish which device to open. The default constructor NewFT232H()
+// will attempt to parse command line flags to select a specific device.
 // The only interface that is initialized by default is GPIO. You must call an
 // initialization method of one of the other interfaces before using it.
 type FT232H struct {
