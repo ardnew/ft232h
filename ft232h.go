@@ -46,17 +46,17 @@ func NewFT232H() (*FT232H, error) {
 	if flag.Parsed() {
 		han = flag.ContinueOnError
 	}
-	if f, e := NewFT232HWithArgs(os.Args[1:], han); flag.ErrHelp == e {
+	if f, e := NewFT232HWithFlag(os.Args[1:], han); flag.ErrHelp == e {
 		return NewFT232HWithMask(nil)
 	} else {
 		return f, e
 	}
 }
 
-// NewFT232HWithArgs attempts to open a connection with the first MPSSE-capable
+// NewFT232HWithFlag attempts to open a connection with the first MPSSE-capable
 // USB device matching the flags given in the command-line-style string slice.
 // See type OpenFlag for details.
-func NewFT232HWithArgs(arg []string, han flag.ErrorHandling) (*FT232H, error) {
+func NewFT232HWithFlag(arg []string, han flag.ErrorHandling) (*FT232H, error) {
 	o := NewOpenFlag(han)
 	if len(arg) > 0 {
 		_ = o.Parse(arg)

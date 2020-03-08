@@ -83,7 +83,7 @@ func TestNewFT232H(t *testing.T) {
 	}
 }
 
-func TestNewFT232HWithArgs(t *testing.T) {
+func TestNewFT232HWithFlag(t *testing.T) {
 
 	for _, test := range []struct {
 		name string
@@ -109,7 +109,7 @@ func TestNewFT232HWithArgs(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%s=[%+v]", test.name, strings.Join(test.args, ",")),
 			func(s *testing.T) {
-				ft, err := NewFT232HWithArgs(test.args, flag.ContinueOnError)
+				ft, err := NewFT232HWithFlag(test.args, flag.ContinueOnError)
 				if test.open {
 					if nil == err { // success
 						if err := ft.Close(); nil != err {

@@ -50,8 +50,8 @@ func (s Status) OK() bool {
 	return SOK == s
 }
 
-// Error returns the string representation of a status, required by the Go error
-// interface. Returns the string "unknown error" is the status is invalid.
+// Error implements the error interface. Returns the string "unknown error" if
+// the status is invalid.
 func (s Status) Error() string {
 	switch s {
 	case SOK:

@@ -231,7 +231,7 @@ const (
 // Change changes the currently configured CS pin.
 // It can be called while the SPI interface is open without having to first
 // close and reopen the device.
-// The CS pin can be either a DBUS or CBUS (GPIO) pin, see the documentation on
+// The CS pin can be on either port, "D" or "C" (GPIO) pin, see the godoc on
 // Write for details.
 func (spi *SPI) Change(cs Pin) error {
 

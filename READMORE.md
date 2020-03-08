@@ -113,17 +113,13 @@ The design of this module API was intended to marry the following principles, or
 
 ## Peripheral devices
 
-The great thing about the FT232H is being able to communicate with the plethora of GPIO and serial peripheral devices – which usually require the hardware interfaces found on low-power microcontrollers – with nothing but a USB cable directly from your PC.
+See [`drv/`](https://github.com/ardnew/ft232h/drv) for a list of existing device drivers.
 
-However, the official device drivers required to control the FT232H are quite complex and require an understanding of microcontroller programming in C. This `ft232h` module greatly simplifies that programming interface, bridging many of those peripherals with the native Go ecosystem of common PCs.
+See the [package documentation][docurl] for info on developing device drivers and the API for using this module directly.
 
-Adding support for a peripheral device is straight-forward. There's no _required_ Go `interface` patterns to implement. Each serial (and GPIO) capability of the FT232H is exposed as a named member of the `type FT232H struct`. Each member has its own conventional methods associated with it (configure, read, write, etc.), abstracting away all of the tedious details.
+## Examples
 
-You can create a new driver package under `github.com/ardnew/ft232h/drv` to encapsulate and reuse the definitions and procedures provided by the peripheral device, or you can simply interact with the FT232H interfaces directly from your application.
-
-Existing drivers are defined under `github.com/ardnew/ft232h/drv`. See `drv/README.md` for info.
-
-Other examples can be found in `github.com/ardnew/ft232h/examples`.
+Demo applications using this module and its device drivers can be found in [`examples/`](https://github.com/ardnew/ft232h/examples).
 
 ## Notes
 
