@@ -8,7 +8,7 @@ import (
 
 func doStuff(*ft232h.FT232H) {}
 
-func Example_command_line() {
+func Example() {
 
 	// Call NewFT232H() to open an FT232H device from a command line-oriented
 	// application to help select which FTDI device to use (by parsing predefined
