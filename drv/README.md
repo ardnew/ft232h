@@ -14,25 +14,24 @@ The idea is to create a single driver package at `drv/FOO` to implement the defi
 
 Alternatively, you can just interact with the `ft232h` module directly from an application.
 
-See the [godoc][docurl] documentation for API details.
+See the [godoc](https://godoc.org/github.com/ardnew/ft232h) documentation for API details.
 
-## Supported devices
+# Supported devices
 The following peripheral devices currently have driver support.
 
-#### GPIO
+## GPIO
 > TBD
 
-#### SPI
-##### ILI9341 - [`github.com/ardnew/ft232h/drv/ili9341`](ili9341)
-Driver for the ILI9341 320x240 TFT LCD chipset using the `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
+## SPI
+ - [x] **ILI9341** - [`github.com/ardnew/ft232h/drv/ili9341`](ili9341)
+   - Driver for the ILI9341 320x240 TFT LCD chipset using `ft232h.SPI` and `ft232h.GPIO` interfaces – including methods to draw pixels, rectangles, and 16-bit RGB bitmaps.
+   - [`boing`](../examples/spi/ili9341/boing) - demo application
 
-- [`boing`](../examples/spi/ili9341/boing) - demo application
-
-#### I²C
+## I²C
 > TBD
 
-#### JTAG
+## JTAG
 > TBD
 
-#### UART
+## UART
 > TBD
