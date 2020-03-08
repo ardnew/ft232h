@@ -42,7 +42,7 @@ Building libft232h
 The static library libft232h.a can be rebuilt if necessary to support other
 platforms or if any changes to libMPSSE or D2XX are required.
 
-Building the native drivers is done with a [GNU Makefile](src/Makefile). It
+Building the native drivers is done with a GNU Makefile (src/Makefile). It
 performs the following tasks:
 
   1. Compiles the libMPSSE C source code into object files (.o)
@@ -69,7 +69,7 @@ Building libft232h for other platforms
 To support other platforms, you will need to make sure FTDI releases D2XX for
 that platform. You can view and download official releases from FTDI's Web
 site. You will then need to copy the FTDI-released static library to a
-subdirectory of native/src/$(os)-$(arch)/libftd2xx/$(version), following
+subdirectory of native/src/<os>-<arch>/libftd2xx/<version>, following the
 existing convention, and add/update the various $(*ftd2xx*) definitions – as
 well as any necessary CFLAGS and LDFLAGS – in the Makefile.
 
