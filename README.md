@@ -15,7 +15,7 @@
 [![GoDoc][docimg]][docurl] [![CircleCI][cciimg]][cciurl] [![Go Report Card][repimg]][repurl]
 
 ## API features
-#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
+#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
 - [x] [**Documented**][docurl] and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
