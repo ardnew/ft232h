@@ -1,4 +1,6 @@
 /*
+Native FTDI drivers to service low-level USB communication.
+
 Native FTDI Drivers
 
 All communication with MPSSE-capable devices (including FT232H) is performed
@@ -80,3 +82,12 @@ examples. The provided Makefile can also generate the cgo preamble for your
 automatically upon successful compilation.
 */
 package native
+
+const (
+	FT232H_Datasheet    = "https://github.com/ardnew/ft232h/doc/FT232H-datasheet.pdf"
+	D2XX_Manual         = "https://github.com/ardnew/ft232h/doc/D2XX-user-guide.pdf"
+	LibMPSSE_I2C_Manual = "https://github.com/ardnew/ft232h/doc/LibMPSSE-I2C-user-guide.pdf"
+	LibMPSSE_SPI_Manual = "https://github.com/ardnew/ft232h/doc/LibMPSSE-SPI-user-guide.pdf"
+	D2XX_Product        = "https://www.ftdichip.com/Drivers/D2XX.htm"
+	LibMPSEE_Product    = "https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm"
+)

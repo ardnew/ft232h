@@ -6,11 +6,10 @@ import (
 	"github.com/ardnew/ft232h"
 )
 
-// Call NewFT232H() to open an FT232H device from a command line-oriented
-// application to help select which FTDI device to use (by parsing predefined
-// command line flags) if more than one is connected to the system.
+// Example demonstrates opening an FT232H with optional command line flags that
+// specify which FTDI device to use if more than one is connected to the system.
 //
-// If no flags are provided, the first MPSSE-capable USB device found is used.
+// If no flags are provided, the first MPSSE-capable device found is used.
 // Use -h to see all available flags.
 //
 // See the NewFT232H() godoc for other semantics related to the flag package.

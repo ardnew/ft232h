@@ -1,6 +1,6 @@
 /*
-Package ft232h is a Go module for FTDI FT232H USB to GPIO/SPI/I²C/JTAG/UART
-protocol converter.
+High-level driver for the FTDI FT232H USB to GPIO/SPI/I²C/JTAG/UART protocol
+converter.
 
 Developing Peripheral Device Drivers
 
@@ -46,18 +46,6 @@ required to compile them on his/her own.
 
 For more details and instructions on compiling the library yourself, refer to
 the godoc of package github.com/ardnew/ft232h/native.
-
-See Also
-
-The following links contain the relevant FTDI documentation for the software
-versions used in the ft232h Go module:
-
-     FT232H Datasheet: https://github.com/ardnew/ft232h/doc/FT232H-datasheet.pdf
-          D2XX Manual: https://github.com/ardnew/ft232h/doc/D2XX-user-guide.pdf
-  libMPSSE I²C Manual: https://github.com/ardnew/ft232h/doc/LibMPSSE-I2C-user-guide.pdf
-  libMPSSE SPI Manual: https://github.com/ardnew/ft232h/doc/LibMPSSE-SPI-user-guide.pdf
-         D2XX Product: https://www.ftdichip.com/Drivers/D2XX.htm
-     libMPSEE Product: https://www.ftdichip.com/Support/SoftwareExamples/MPSSE.htm
 
 */
 package ft232h
