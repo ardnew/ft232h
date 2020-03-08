@@ -15,7 +15,7 @@
 [![GoDoc][docimg]][docurl] [![CircleCI][cciimg]][cciurl] [![Go Report Card][repimg]][repurl]
 
 ## API features
-#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces _may_ (will) change.
+#### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
 - [x] [**Documented**][docurl] and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
@@ -76,9 +76,8 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 
 ## Usage
 
-###### Documentation
-
-|       --       |         `go doc`         |                     README                      |
+##### Documentation
+|     Package    |          godoc           |                    Markdown                     |
 |:--------------:|:------------------------:|:-----------------------------------------------:|
 |       API      |[![GoDoc][docimg]][docurl]|   [README](https://github.com/ardnew/ft232h)    |
 | Device Drivers |[![GoDoc][drvimg]][drvurl]| [README](https://github.com/ardnew/ft232h/drv)  |
@@ -87,6 +86,8 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 ## Examples
 
 Demo applications using this module and its device drivers can be found in [`examples/`](https://github.com/ardnew/ft232h/examples).
+
+Usage examples for the API can be found in the godoc [package documentation][docurl].
 
 ## Notes
 
