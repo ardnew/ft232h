@@ -6,6 +6,8 @@ import (
 	"github.com/ardnew/ft232h"
 )
 
+func doStuff(*ft232h.FT232H) {}
+
 func Example_command_line() {
 
 	// Call NewFT232H() to open an FT232H device from a command line-oriented
