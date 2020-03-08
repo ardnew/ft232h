@@ -16,7 +16,7 @@
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
-- [x] [**Documented**][docurl] and [**integration tested**][cciurl]
+- [x] [**Documented**][#documentation] and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
@@ -74,14 +74,12 @@ sudo rmmod ftdi_sio
 #### macOS
 Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichip.com/Support/Documents/ProgramGuides/D2XX_Programmer's_Guide(FT_000071).pdf) above, I've found that the current versions of macOS (10.13 and later, personal experience) have no problem co-existing with the `D2XX` driver included with this `ft232h` Go module. It _Just Works_ and no configuration is necessary.
 
-## Usage
-
-##### Documentation
-|     Package    |          godoc           |                    Markdown                     |
-|:--------------:|:------------------------:|:-----------------------------------------------:|
-|       API      |[![GoDoc][docimg]][docurl]|   [README](https://github.com/ardnew/ft232h)    |
-| Device Drivers |[![GoDoc][drvimg]][drvurl]|                  [README](drv)                  |
-|   FTDI Drivers |[![GoDoc][ntvimg]][ntvurl]|                 [README](native)                |
+## Documentation
+|                            |                           Markdown                           |          godoc           |
+|---------------------------:|:------------------------------------------------------------:|:------------------------:|
+|       Primary API reference|[`github.com/ardnew/ft232h`](https://github.com/ardnew/ft232h)|[![GoDoc][docimg]][docurl]|
+|Supported peripheral devices|           [`github.com/ardnew/ft232h/drv`](drv)              |[![GoDoc][drvimg]][drvurl]|
+|         Native FTDI drivers|        [`github.com/ardnew/ft232h/native`](native)           |[![GoDoc][ntvimg]][ntvurl]|
 
 ## Examples
 
