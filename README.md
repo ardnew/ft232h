@@ -16,7 +16,7 @@
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
-- [x] [**Documented**][#documentation] and [**integration tested**][cciurl]
+- [x] [**Documented**](#documentation) and [**integration tested**][cciurl]
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations
