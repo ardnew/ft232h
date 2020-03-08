@@ -1,5 +1,9 @@
 [docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
 [docurl]:https://godoc.org/github.com/ardnew/ft232h
+[drvimg]:https://godoc.org/github.com/ardnew/ft232h/drv?status.svg
+[drvurl]:https://godoc.org/github.com/ardnew/ft232h/drv
+[ntvimg]:https://godoc.org/github.com/ardnew/ft232h/native?status.svg
+[ntvurl]:https://godoc.org/github.com/ardnew/ft232h/native
 [cciimg]:https://circleci.com/gh/ardnew/ft232h.svg?style=shield
 [cciurl]:https://circleci.com/gh/ardnew/ft232h
 [repimg]:https://goreportcard.com/badge/github.com/ardnew/ft232h
@@ -72,13 +76,13 @@ Despite FTDI's [own quote from the `D2XX Programmer's Guide`](http://www.ftdichi
 
 ## Usage
 
-#### Design
+###### Documentation
 
-## Peripheral devices
-
-See [`drv/`](https://github.com/ardnew/ft232h/drv) for a list of existing device drivers.
-
-See the [package documentation][docurl] for info on developing device drivers and the API for using this module directly.
+|       --       |         `go doc`         |                     README                      |
+|:--------------:|:------------------------:|:-----------------------------------------------:|
+|       API      |[![GoDoc][docimg]][docurl]|   [README](https://github.com/ardnew/ft232h)    |
+| Device Drivers |[![GoDoc][drvimg]][drvurl]| [README](https://github.com/ardnew/ft232h/drv)  |
+|   FTDI Drivers |[![GoDoc][ntvimg]][ntvurl]|[README](https://github.com/ardnew/ft232h/native)|
 
 ## Examples
 

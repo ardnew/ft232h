@@ -1,5 +1,5 @@
-[docimg]:https://godoc.org/github.com/ardnew/ft232h?status.svg
-[docurl]:https://godoc.org/github.com/ardnew/ft232h
+[docimg]:https://godoc.org/github.com/ardnew/ft232h/drv?status.svg
+[docurl]:https://godoc.org/github.com/ardnew/ft232h/drv
 
 # ft232h/drv
 
