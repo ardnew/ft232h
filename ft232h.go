@@ -4,10 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math"
-	"math/bits"
+	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -24,6 +22,7 @@ import (
 type FT232H struct {
 	info *deviceInfo
 	mode Mode
+	open *OpenFlag
 	I2C  *I2C
 	SPI  *SPI
 	GPIO *GPIO
@@ -31,96 +30,8 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Index: %s, Mode: %s, I2C: %+v, SPI: %+v, GPIO: %s }",
-		m.info, m.mode, m.I2C, m.SPI, m.GPIO)
-}
-
-// NewFT232H attempts to open a connection with the first MPSSE-capable USB
-// device matching flags given at the command-line. Use -h to see all of the
-// supported flags. Calls os.Exit if the flags could not be parsed (unless the
-// command-line was successfully parsed elsewhere prior to reaching here; in
-// which case, attempt to open the first device found).
-func NewFT232H() (*FT232H, error) {
-	han := flag.ExitOnError
-	// if the flags have already been parsed (e.g. by `go test`), and it didn't
-	// cause an error, don't call os.Exit if our parser then fails.
-	if flag.Parsed() {
-		han = flag.ContinueOnError
-	}
-	if f, e := NewFT232HWithFlag(os.Args[1:], han); flag.ErrHelp == e {
-		return NewFT232HWithMask(nil)
-	} else {
-		return f, e
-	}
-}
-
-// NewFT232HWithFlag attempts to open a connection with the first MPSSE-capable
-// USB device matching the flags given in the command-line-style string slice.
-// See type OpenFlag for details.
-func NewFT232HWithFlag(arg []string, han flag.ErrorHandling) (*FT232H, error) {
-	o := NewOpenFlag(han)
-	if len(arg) > 0 {
-		_ = o.Parse(arg)
-	}
-	return NewFT232HWithMask(o.OpenMask())
-}
-
-// NewFT232HWithIndex attempts to open a connection with the MPSSE-capable USB
-// device enumerated at index (starting at 0), returning a non-nil error if
-// unsuccessful. A negative index is equivalent to 0.
-func NewFT232HWithIndex(index int) (*FT232H, error) {
-	if index < 0 {
-		index = 0
-	}
-	return NewFT232HWithMask(&OpenMask{Index: fmt.Sprintf("%d", index)})
-}
-
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given vendor ID vid and product ID pid, returning a non-nil
-// error if unsuccessful.
-func NewFT232HWithVIDPID(vid uint16, pid uint16) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{
-		VID: fmt.Sprintf("%d", vid),
-		PID: fmt.Sprintf("%d", pid),
-	})
-}
-
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given serial no., returning a non-nil error if unsuccessful.
-// An empty string matches any serial number.
-func NewFT232HWithSerial(serial string) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{Serial: serial})
-}
-
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given description, returning a non-nil error if unsuccessful.
-// An empty string matches any description.
-func NewFT232HWithDesc(desc string) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{Desc: desc})
-}
-
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device matching all of the given attributes, returning a non-nil error if
-// unsuccessful. Uses the first device found if mask is nil or all attributes
-// are empty strings.
-//
-// The attributes are each specified as strings, including the integers, so that
-// any attribute not given (i.e. empty string) will never exclude a device. The
-// integer attributes can be expressed in any base recognized by the Go grammar
-// for numeric literals (e.g., "13", "0b1101", "0xD", and "D" are all valid and
-// equivalent).
-func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
-	m := &FT232H{info: nil, mode: ModeNone, I2C: nil, SPI: nil, GPIO: nil}
-	if err := m.openDevice(mask); nil != err {
-		return nil, err
-	}
-	m.I2C = &I2C{device: m, config: i2cConfigDefault()}
-	m.SPI = &SPI{device: m, config: spiConfigDefault()}
-	m.GPIO = &GPIO{device: m, config: GPIOConfigDefault()}
-	if err := m.GPIO.Init(); nil != err {
-		return nil, err
-	}
-	return m, nil
+	return fmt.Sprintf("{ Index: %s, Mode: %s, Open: %s, I2C: %+v, SPI: %+v, GPIO: %s }",
+		m.info, m.mode, m.open, m.I2C, m.SPI, m.GPIO)
 }
 
 // OpenMask contains strings for each of the supported attributes used to
@@ -133,8 +44,8 @@ type OpenMask struct {
 	Desc   string
 }
 
-// OpenFlag contains the attributes used to identify an FT232H device to open
-// from a command-line-style string slice.
+// OpenFlag contains the attributes used to distinguish which FT232H device to
+// open from a command-line-style string slice.
 type OpenFlag struct {
 	flag   *flag.FlagSet
 	index  *int
@@ -144,18 +55,131 @@ type OpenFlag struct {
 	desc   *string
 }
 
-// NewOpenFlag constructs a new OpenFlag with given ErrorHandling mode.
-func NewOpenFlag(han flag.ErrorHandling) *OpenFlag {
+// String returns a descriptive string of all flags successfully parsed.
+func (o *OpenFlag) String() string {
+	if o.flag.NFlag() > 0 {
+		s := []string{}
+		o.flag.Visit(func(f *flag.Flag) {
+			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
+		})
+		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
+	} else {
+		return "(none)"
+	}
+}
+
+// NewFT232H attempts to open a connection with the first MPSSE-capable USB
+// device matching flags given at the command line. Use -h to see all of the
+// supported flags.
+// Calls os.Exit() if and only if at least one command line flag was given and
+// no device was found that matches all given flags. If no flags were given,
+// attempts to open the first device found.
+func NewFT232H() (*FT232H, error) {
+	ft, err := NewFT232HWithFlag(os.Args[1:], flag.Parsed())
+	_, hasFlag := ft.open.OpenMask()
+	if !(nil == err || hasFlag) {
+		log.Printf("1. -----------------------")
+		return NewFT232HWithMask(nil)
+	}
+	return ft, err
+}
+
+// NewFT232HWithIndex attempts to open a connection with the MPSSE-capable USB
+// device enumerated at index (starting at 0). Returns non-nil error if
+// unsuccessful. A negative index is equivalent to 0.
+func NewFT232HWithIndex(index int) (*FT232H, error) {
+	if index < 0 {
+		index = 0
+	}
+	return NewFT232HWithMask(&OpenMask{Index: fmt.Sprintf("%d", index)})
+}
+
+// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
+// USB device with given vendor ID vid and product ID pid. Returns a non-nil
+// error if unsuccessful.
+func NewFT232HWithVIDPID(vid uint16, pid uint16) (*FT232H, error) {
+	return NewFT232HWithMask(&OpenMask{
+		VID: fmt.Sprintf("%d", vid),
+		PID: fmt.Sprintf("%d", pid),
+	})
+}
+
+// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
+// USB device with given serial no. Returns a non-nil error if unsuccessful.
+// An empty string matches any serial number.
+func NewFT232HWithSerial(serial string) (*FT232H, error) {
+	return NewFT232HWithMask(&OpenMask{Serial: serial})
+}
+
+// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
+// USB device with given description. Returns a non-nil error if unsuccessful.
+// An empty string matches any description.
+func NewFT232HWithDesc(desc string) (*FT232H, error) {
+	return NewFT232HWithMask(&OpenMask{Desc: desc})
+}
+
+// NewFT232HWithFlag attempts to open a connection with the first MPSSE-capable
+// USB device matching flags given in a command-line-style string slice.
+// See type OpenFlag and func NewOpenFlag() for details.
+func NewFT232HWithFlag(arg []string, bless bool) (*FT232H, error) {
+	o := NewOpenFlag(bless)
+	if len(arg) > 0 {
+		log.Printf("2. -----------------------")
+		_ = o.Parse(arg)
+	}
+	m, _ := o.OpenMask()
+	ft, err := NewFT232HWithMask(m)
+	if nil != err {
+		return nil, err
+	}
+	ft.open = o // keep a copy of the flagset for use/inspection by test suite
+	return ft, nil
+}
+
+// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
+// USB device matching all of the given attributes. Returns a non-nil error if
+// unsuccessful. Uses the first device found if mask is nil or all attributes
+// are empty strings.
+//
+// The attributes are each specified as strings, including the integers, so that
+// any attribute not given (i.e. empty string) will never exclude a device. The
+// integer attributes can be expressed in any base recognized by the Go grammar
+// for numeric literals (e.g., "13", "0b1101", "0xD", and "D" are all valid and
+// equivalent).
+func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
+	m := &FT232H{info: nil, mode: ModeNone, open: nil, I2C: nil, SPI: nil, GPIO: nil}
+	if err := m.openDevice(mask); nil != err {
+		return nil, err
+	}
+	m.I2C = &I2C{device: m, config: i2cConfigDefault()}
+	m.SPI = &SPI{device: m, config: spiConfigDefault()}
+	m.GPIO = &GPIO{device: m, config: GPIOConfigDefault()}
+	if err := m.GPIO.Init(); nil != err {
+		return nil, err
+	}
+	return m, nil
+}
+
+// NewOpenFlag constructs a new FlagSet with fields to describe an FT232H.
+//
+// If bless is true, the fields are also registered with the default, top-level
+// command line parser in the standard flag package. This lets external packages
+// (e.g. via `go test`) inherit these flags and not call os.Exit() when these
+// unexpected flags are received.
+func NewOpenFlag(bless bool) *OpenFlag {
 	const (
-		flagSetName   string = "FT232H open flags"
 		indexDefault  int    = 0
 		vidDefault    int    = 0x0403
 		pidDefault    int    = 0x6014
 		serialDefault string = ""
 		descDefault   string = ""
 	)
-	f := flag.NewFlagSet(flagSetName, han)
-	return &OpenFlag{
+	han := flag.ExitOnError
+	if bless {
+		han = flag.ContinueOnError
+	}
+	f := flag.NewFlagSet(os.Args[0]+" open flags", han)
+	o := &OpenFlag{
 		flag:   f,
 		index:  f.Int("index", indexDefault, "open device enumerated at index `N` ≥ 0"),
 		vid:    f.Int("vid", vidDefault, "open device with vendor ID"),
@@ -163,16 +187,28 @@ func NewOpenFlag(han flag.ErrorHandling) *OpenFlag {
 		serial: f.String("serial", serialDefault, "open device with identifier"),
 		desc:   f.String("desc", descDefault, "open device with description"),
 	}
+
+	if bless {
+		o.flag.VisitAll(func(f *flag.Flag) {
+			if nil == flag.Lookup(f.Name) {
+				flag.Var(f.Value, f.Name, f.Usage)
+			}
+		})
+	}
+	return o
 }
 
-// Parse parses the flags from the given slice of strings arg into the fields of
-// the receiver.
+// Parse parses flags from the given slice of strings arg into the fields of its
+// receiver, and silently ignores any unexpected flags.
 func (o *OpenFlag) Parse(arg []string) error {
 	if o.flag.ErrorHandling() == flag.ContinueOnError {
 		o.flag.SetOutput(ioutil.Discard)
 	}
+
 	if err := o.flag.Parse(arg); nil != err {
-		return err
+		log.Printf("4. ----------------------- %+v", err)
+		//log.Printf("Parse = %+v", err)
+		//return err
 	}
 	return nil
 }
@@ -180,29 +216,32 @@ func (o *OpenFlag) Parse(arg []string) error {
 // OpenMask constructs an OpenMask using the parsed flags explicitly provided.
 // If the OpenFlag has not yet been parsed, a zero OpenMask is returned that
 // matches all devices.
-func (o *OpenFlag) OpenMask() *OpenMask {
+// The bool value returned is true if and only if at least one flag was parsed.
+func (o *OpenFlag) OpenMask() (*OpenMask, bool) {
 	m := &OpenMask{}
+	t := false
 	o.flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "index":
-			m.Index = f.Value.String()
+			m.Index, t = f.Value.String(), true
 		case "vid":
-			m.VID = f.Value.String()
+			m.VID, t = f.Value.String(), true
 		case "pid":
-			m.PID = f.Value.String()
+			m.PID, t = f.Value.String(), true
 		case "serial":
-			m.Serial = f.Value.String()
+			m.Serial, t = f.Value.String(), true
 		case "desc":
-			m.Desc = f.Value.String()
+			m.Desc, t = f.Value.String(), true
 		}
 	})
-	return m
+	log.Printf("3. ----------------------- %+v", m)
+	return m, t
 }
 
-// openDevice attempts to open the device matching the given mask, returning
-// a non-nil error if unsuccessful. The error SDeviceNotFound is returned if
-// no device was found matching the given mask. See NewFT232HWithMask for
-// semantics.
+// openDevice attempts to open the device matching all fields of a given mask.
+// Returns a non-nil error if unsuccessful. The error SDeviceNotFound is
+// returned if no device was found matching the given mask.
+// See NewFT232HWithMask for semantics.
 func (m *FT232H) openDevice(mask *OpenMask) error {
 
 	var (
@@ -267,7 +306,7 @@ func (m *FT232H) openDevice(mask *OpenMask) error {
 	return nil
 }
 
-// Close closes the connection with an FT232H, returning a non-nil error if
+// Close closes the USB connection with an FT232H. Returns a non-nil error if
 // unsuccessful.
 func (m *FT232H) Close() error {
 	if nil != m.info {
@@ -275,93 +314,6 @@ func (m *FT232H) Close() error {
 	}
 	m.mode = ModeNone
 	return nil
-}
-
-// Pin defines the methods required for representing an FT232H port pin.
-type Pin interface {
-	IsMPSSE() bool     // true if DPin (port "D"), false if CPin (GPIO/port "C")
-	Mask() uint8       // the bitmask used to address the pin, equal to 1<<Pos()
-	Pos() int          // the ordinal pin number (0-7), equal to log2(Mask())
-	String() string    // the string representation "D#" or "C#", with # = Pos()
-	Valid() bool       // true IFF bitmask has exactly one bit set
-	Equals(q Pin) bool // true IFF p and q have equal port and bitmask
-}
-
-// IsMPSSE is true for pins on FT232H port "D".
-func (p DPin) IsMPSSE() bool { return true }
-
-// IsMPSSE is false for pins on FT232H port "C".
-func (p CPin) IsMPSSE() bool { return false }
-
-// Mask is the bitmask used to address the pin on port "D".
-func (p DPin) Mask() uint8 { return uint8(p) }
-
-// Mask is the bitmask used to address the pin on port "C".
-func (p CPin) Mask() uint8 { return uint8(p) }
-
-// Pos is the ordinal pin number (0-7) on port "D".
-func (p DPin) Pos() int { return int(math.Log2(float64(p))) }
-
-// Pos is the ordinal pin number (0-7) on port "C".
-func (p CPin) Pos() int { return int(math.Log2(float64(p))) }
-
-// String is the string representation "D#" of the pin, with # equal to Pos.
-func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
-
-// String is the string representation "C#" of the pin, with # equal to Pos.
-func (p CPin) String() string { return fmt.Sprintf("C%d", p.Pos()) }
-
-// Valid is true if the pin bitmask has exactly one bit set, otherwise false.
-func (p DPin) Valid() bool { return 1 == bits.OnesCount64(uint64(p)) }
-
-// Valid is true if the pin bitmask has exactly one bit set, otherwise false.
-func (p CPin) Valid() bool { return 1 == bits.OnesCount64(uint64(p)) }
-
-// Equals is true if the given pin is on port "D" and has the same bitmask,
-// otherwise false.
-func (p DPin) Equals(q Pin) bool { return q.IsMPSSE() && p.Mask() == q.Mask() }
-
-// Equals is true if the given pin is on port "C" and has the same bitmask,
-// otherwise false.
-func (p CPin) Equals(q Pin) bool { return !q.IsMPSSE() && p.Mask() == q.Mask() }
-
-// Types representing individual port pins.
-type (
-	DPin uint8 // pin bitmask on MPSSE low-byte lines (port "D" of FT232H)
-	CPin uint8 // pin bitmask on MPSSE high-byte lines (port "C" of FT232H)
-)
-
-// Constants related to GPIO pin configuration
-const (
-	PinLO byte = 0 // pin value clear
-	PinHI byte = 1 // pin value set
-	PinIN byte = 0 // pin direction input
-	PinOT byte = 1 // pin direction output
-
-	NumDPins = 8 // number of MPSSE low-byte line pins
-	NumCPins = 8 // number of MPSSE high-byte line pins
-)
-
-// D returns a DPin bitmask with only the given bit at position pin set.
-// If the given pin position is negative or greater than 7, the invalid bitmask
-// (0) is returned.
-func D(pin int) DPin {
-	if pin >= 0 && pin < NumDPins {
-		return DPin(1 << pin)
-	} else {
-		return DPin(0) // invalid DPin
-	}
-}
-
-// C returns a CPin bitmask with only the given bit at position pin set.
-// If the given pin position is negative or greater than 7, the invalid bitmask
-// (0) is returned.
-func C(pin int) CPin {
-	if pin >= 0 && pin < NumCPins {
-		return CPin(1 << pin)
-	} else {
-		return CPin(0) // invalid CPin
-	}
 }
 
 // deviceInfo contains the USB device descriptor and attributes for a device
@@ -381,9 +333,9 @@ type deviceInfo struct {
 
 // String constructs a readable string representation of the deviceInfo.
 func (dev *deviceInfo) String() string {
-	return fmt.Sprintf("%d:{ Open = %t, HiSpeed = %t, Chip = \"%s\" (0x%02X), "+
+	return fmt.Sprintf("%d:{ Open = %t, HiSpeed = %t, Chip = %q (0x%02X), "+
 		"VID = 0x%04X, PID = 0x%04X, Location = %04X, "+
-		"Serial = \"%s\", Desc = \"%s\", Handle = %p }",
+		"Serial = %q, Desc = %q, Handle = %p }",
 		dev.index+1, dev.isOpen, dev.isHiSpeed, dev.chip, uint32(dev.chip),
 		dev.vid, dev.pid, dev.locID, dev.serial, dev.desc, dev.handle)
 }
@@ -402,7 +354,7 @@ func (dev *deviceInfo) open() error {
 }
 
 // close attempts to close a USB interface opened through the D2XX bridge,
-// returning a non-nil error if unsuccessful.
+// Returns a non-nil error if unsuccessful.
 func (dev *deviceInfo) close() error {
 	if !dev.isOpen {
 		return nil
@@ -414,8 +366,8 @@ func (dev *deviceInfo) close() error {
 	return nil
 }
 
-// devices queries all of the USB devices on the system using the D2XX bridge,
-// returning a slice of deviceInfo pointers for all MPSSE-capable devices.
+// devices queries all of the USB devices on the system using the D2XX bridge
+// and returns a slice of deviceInfo pointers for all MPSSE-capable devices.
 // Returns a nil slice and non-nil error if the driver failed to obtain device
 // information from the system.
 // Returns an empty slice and nil error if no MPSSE-capable devices were found
@@ -437,134 +389,4 @@ func devices() ([]*deviceInfo, error) {
 	}
 
 	return info, nil
-}
-
-// parseUint32 attempts to convert a given string to a 32-bit unsigned integer,
-// returning zero and false if the string is empty, negative, or otherwise
-// invalid.
-// The string can be expressed in various bases, following the convention of
-// Go's strconv.ParseUint with base = 0, bitSize = 32.
-// The only exception is when the string contains hexadecimal chars and doesn't
-// begin with the required prefix "0x". In this case, the "0x" prefix is added
-// automatically.
-func parseUint32(s string) (uint32, bool) {
-	s = strings.TrimSpace(strings.ToLower(s))
-	if s == "" {
-		return 0, false
-	}
-	// ParseUint requires a leading "0x" for base 16
-	if strings.ContainsAny(s, "abcdef") && !strings.HasPrefix(s, "0b") {
-		s = "0x" + strings.TrimPrefix(s, "0x") // always prefix (but not twice!)
-	}
-	// now parse according to Go convention
-	i, err := strconv.ParseInt(s, 0, 64)
-	if nil != err || i < 0 || i > math.MaxUint32 {
-		return 0, false
-	} else {
-		return uint32(i), true
-	}
-}
-
-// AddrSpace represents the address space of a pointer. Intended to be used when
-// specifying e.g. I²C register addresses and the like.
-type AddrSpace uint8
-
-// Constants defining various address spaces.
-const (
-	Addr8Bit  AddrSpace = 1 << iota // 8-bit addresses
-	Addr16Bit                       // 16-bit addresses
-	Addr32Bit                       // 32-bit addresses
-	Addr64Bit                       // 64-bit addresses
-)
-
-// String returns a string representation of the address space.
-func (s AddrSpace) String() string {
-	return fmt.Sprintf("%d-bit", s.Bits())
-}
-
-// Bits returns the number of usable bits in an address space.
-func (s AddrSpace) Bits() uint {
-	switch s {
-	case Addr8Bit, Addr16Bit, Addr32Bit, Addr64Bit:
-		return s.Bytes() * 8
-	}
-	return 0
-}
-
-// Bytes returns the number of usable bytes in an address space.
-func (s AddrSpace) Bytes() uint {
-	switch s {
-	case Addr8Bit, Addr16Bit, Addr32Bit, Addr64Bit:
-		return uint(s)
-	}
-	return 0
-}
-
-// ByteOrder represents the byte order of a sequence of bytes.
-type ByteOrder uint8
-
-// Constants defining the supported byte orderings.
-const (
-	MSB ByteOrder = iota // most significant byte first (big endian)
-	LSB                  // least significant byte first (little endian)
-)
-
-// String returns a string representation of the byte order.
-func (o ByteOrder) String() string {
-	switch o {
-	case MSB:
-		return "MSB"
-	case LSB:
-		return "LSB"
-	default:
-		return "(invalid byte order)"
-	}
-}
-
-// Bytes converts the given value to an ordered slice of bytes. The receiver
-// value determines ordering, and the count argument defines slice length.
-func (o ByteOrder) Bytes(count uint, value uint64) []uint8 {
-
-	if count > 8 {
-		count = 8
-	}
-
-	b := make([]uint8, count)
-	for i := range b {
-		switch o {
-		case MSB:
-			b[i] = uint8((value >> ((count - uint(i) - 1) * 8)) & 0xFF)
-		case LSB:
-			b[i] = uint8((value >> (count * 8)) & 0xFF)
-		}
-	}
-	return b
-}
-
-// Uint converts a given slice of bytes to an unsigned integer. The receiver
-// value determines ordering, and the count argument defines the number of bytes
-// (starting from the beginning of the slice) to use for conversion. Cast the
-// value returned if a narrower type is required.
-func (o ByteOrder) Uint(count uint, bytes []uint8) uint64 {
-
-	if nil == bytes {
-		return 0
-	}
-	if count > 8 {
-		count = 8
-	}
-	if count > uint(len(bytes)) {
-		bytes = append(bytes, make([]uint8, count-uint(len(bytes)))...)
-	}
-
-	n := uint64(0)
-	for i, b := range bytes[:count] {
-		switch o {
-		case MSB:
-			n |= uint64(b) << ((count - uint(i) - 1) * 8)
-		case LSB:
-			n |= uint64(b) << (uint(i) * 8)
-		}
-	}
-	return n
 }

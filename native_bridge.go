@@ -175,7 +175,7 @@ const (
 func (m Mode) String() string {
 	switch m {
 	case ModeNone:
-		return "None"
+		return "(none)"
 	case ModeSPI:
 		return "SPI"
 	case ModeI2C:
