@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 )
@@ -30,7 +29,7 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Index: %s, Mode: %s, Open: %s, I2C: %+v, SPI: %+v, GPIO: %s }",
+	return fmt.Sprintf("{ Index: %s, Mode: %s, Open: %+v, I2C: %+v, SPI: %+v, GPIO: %s }",
 		m.info, m.mode, m.open, m.I2C, m.SPI, m.GPIO)
 }
 
@@ -56,32 +55,23 @@ type OpenFlag struct {
 }
 
 // String returns a descriptive string of all flags successfully parsed.
-func (o *OpenFlag) String() string {
-	if o.flag.NFlag() > 0 {
-		s := []string{}
-		o.flag.Visit(func(f *flag.Flag) {
-			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
-		})
-		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
-	} else {
-		return "(none)"
-	}
-}
+// func (o *OpenFlag) String() string {
+// 	if o.flag.NFlag() > 0 {
+// 		s := []string{}
+// 		o.flag.Visit(func(f *flag.Flag) {
+// 			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
+// 		})
+// 		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
+// 	} else {
+// 		return "(none)"
+// 	}
+// }
 
 // NewFT232H attempts to open a connection with the first MPSSE-capable USB
 // device matching flags given at the command line. Use -h to see all of the
 // supported flags.
-// Calls os.Exit() if and only if at least one command line flag was given and
-// no device was found that matches all given flags. If no flags were given,
-// attempts to open the first device found.
 func NewFT232H() (*FT232H, error) {
-	ft, err := NewFT232HWithFlag(os.Args[1:], flag.Parsed())
-	_, hasFlag := ft.open.OpenMask()
-	if !(nil == err || hasFlag) {
-		log.Printf("1. -----------------------")
-		return NewFT232HWithMask(nil)
-	}
-	return ft, err
+	return NewFT232HWithFlag(os.Args[1:], true)
 }
 
 // NewFT232HWithIndex attempts to open a connection with the MPSSE-capable USB
@@ -121,14 +111,13 @@ func NewFT232HWithDesc(desc string) (*FT232H, error) {
 // NewFT232HWithFlag attempts to open a connection with the first MPSSE-capable
 // USB device matching flags given in a command-line-style string slice.
 // See type OpenFlag and func NewOpenFlag() for details.
-func NewFT232HWithFlag(arg []string, bless bool) (*FT232H, error) {
-	o := NewOpenFlag(bless)
+func NewFT232HWithFlag(arg []string, fatal bool) (*FT232H, error) {
+	o := NewOpenFlag(fatal)
 	if len(arg) > 0 {
-		log.Printf("2. -----------------------")
-		_ = o.Parse(arg)
+		if err := o.Parse(arg); nil != err {
+		}
 	}
-	m, _ := o.OpenMask()
-	ft, err := NewFT232HWithMask(m)
+	ft, err := NewFT232HWithMask(o.OpenMask())
 	if nil != err {
 		return nil, err
 	}
@@ -136,7 +125,7 @@ func NewFT232HWithFlag(arg []string, bless bool) (*FT232H, error) {
 	return ft, nil
 }
 
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
+// NewFT232HWithMask attempts to open a connection with the first MPSSE-capable
 // USB device matching all of the given attributes. Returns a non-nil error if
 // unsuccessful. Uses the first device found if mask is nil or all attributes
 // are empty strings.
@@ -161,12 +150,10 @@ func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
 }
 
 // NewOpenFlag constructs a new FlagSet with fields to describe an FT232H.
-//
-// If bless is true, the fields are also registered with the default, top-level
-// command line parser in the standard flag package. This lets external packages
-// (e.g. via `go test`) inherit these flags and not call os.Exit() when these
-// unexpected flags are received.
-func NewOpenFlag(bless bool) *OpenFlag {
+// If fatal is true, the program will call os.Exit() if the flag parser fails on
+// malformed input, unrecognized flags are provided, or the default help flag -h
+// is received.
+func NewOpenFlag(fatal bool) *OpenFlag {
 	const (
 		indexDefault  int    = 0
 		vidDefault    int    = 0x0403
@@ -174,11 +161,11 @@ func NewOpenFlag(bless bool) *OpenFlag {
 		serialDefault string = ""
 		descDefault   string = ""
 	)
-	han := flag.ExitOnError
-	if bless {
-		han = flag.ContinueOnError
+	onError := flag.ContinueOnError
+	if fatal {
+		onError = flag.ExitOnError
 	}
-	f := flag.NewFlagSet(os.Args[0]+" open flags", han)
+	f := flag.NewFlagSet(os.Args[0]+" open flags", onError)
 	o := &OpenFlag{
 		flag:   f,
 		index:  f.Int("index", indexDefault, "open device enumerated at index `N` ≥ 0"),
@@ -187,28 +174,71 @@ func NewOpenFlag(bless bool) *OpenFlag {
 		serial: f.String("serial", serialDefault, "open device with identifier"),
 		desc:   f.String("desc", descDefault, "open device with description"),
 	}
-
-	if bless {
-		o.flag.VisitAll(func(f *flag.Flag) {
-			if nil == flag.Lookup(f.Name) {
-				flag.Var(f.Value, f.Name, f.Usage)
-			}
-		})
-	}
 	return o
+}
+
+// BlessOpenFlag registers the flags in the flag package's default, top-level
+// FlagSet var flag.CommandLine. This lets external packages (e.g. `go test`)
+// inherit these flags and not call os.Exit() when these otherwise unexpected
+// flags are received.
+func BlessOpenFlag() {
+	o := NewOpenFlag(false)
+	o.flag.VisitAll(func(f *flag.Flag) {
+		if nil == flag.Lookup(f.Name) {
+			flag.Var(f.Value, f.Name, f.Usage)
+		}
+	})
 }
 
 // Parse parses flags from the given slice of strings arg into the fields of its
 // receiver, and silently ignores any unexpected flags.
 func (o *OpenFlag) Parse(arg []string) error {
+
 	if o.flag.ErrorHandling() == flag.ContinueOnError {
 		o.flag.SetOutput(ioutil.Discard)
 	}
 
-	if err := o.flag.Parse(arg); nil != err {
-		log.Printf("4. ----------------------- %+v", err)
-		//log.Printf("Parse = %+v", err)
-		//return err
+	// extract only the known flags from arg, so that we don't die when the user
+	// provides unknown flags handled by other packages (e.g. `go test`)
+	parse, keep := []string{}, false
+	for _, a := range arg {
+
+		// we set keep=true when the element being processed is the argument to a
+		// known flag that was previously processed.
+		// always add it to the slice to be parsed.
+		if keep {
+			parse, keep = append(parse, a), false
+			continue // start processing next element
+		}
+
+		// ignore non-flag elements
+		if !strings.HasPrefix(a, "-") {
+			continue
+		}
+
+		// split any flags given as a single argument, i.e. "-flag=value" format,
+		// on the first "=" found, subsequent "=" are preserved in s[1]
+		s := strings.SplitN(a, "=", 2)
+
+		// check if it is a known OpenFlag (but remove the flag prefix "-" first)
+		if f := o.flag.Lookup(strings.TrimPrefix(s[0], "-")); nil != f {
+
+			// this is a recognized OpenFlag. copy it to the slice to be parsed.
+			parse = append(parse, a)
+
+			// we need to keep the next element in arg if this is a non-bool flag and
+			// its value was not already provided (i.e. using form "-flag=value").
+			switch f.Value.(type) {
+			case interface{ IsBoolFlag() }:
+				// bool flags cannot be expressed with form "-flag" "value"
+			default:
+				keep = 1 == len(s)
+			}
+		}
+	}
+
+	if err := o.flag.Parse(parse); nil != err {
+		return err
 	}
 	return nil
 }
@@ -216,26 +246,23 @@ func (o *OpenFlag) Parse(arg []string) error {
 // OpenMask constructs an OpenMask using the parsed flags explicitly provided.
 // If the OpenFlag has not yet been parsed, a zero OpenMask is returned that
 // matches all devices.
-// The bool value returned is true if and only if at least one flag was parsed.
-func (o *OpenFlag) OpenMask() (*OpenMask, bool) {
+func (o *OpenFlag) OpenMask() *OpenMask {
 	m := &OpenMask{}
-	t := false
 	o.flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "index":
-			m.Index, t = f.Value.String(), true
+			m.Index = f.Value.String()
 		case "vid":
-			m.VID, t = f.Value.String(), true
+			m.VID = f.Value.String()
 		case "pid":
-			m.PID, t = f.Value.String(), true
+			m.PID = f.Value.String()
 		case "serial":
-			m.Serial, t = f.Value.String(), true
+			m.Serial = f.Value.String()
 		case "desc":
-			m.Desc, t = f.Value.String(), true
+			m.Desc = f.Value.String()
 		}
 	})
-	log.Printf("3. ----------------------- %+v", m)
-	return m, t
+	return m
 }
 
 // openDevice attempts to open the device matching all fields of a given mask.
