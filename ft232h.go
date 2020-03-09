@@ -29,7 +29,7 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Index: %s, Mode: %s, Open: %+v, I2C: %+v, SPI: %+v, GPIO: %s }",
+	return fmt.Sprintf("{ Index: %s, Mode: %q, Open: %+v, I2C: %s, SPI: %+v, GPIO: %s }",
 		m.info, m.mode, m.open, m.I2C, m.SPI, m.GPIO)
 }
 
@@ -55,17 +55,17 @@ type OpenFlag struct {
 }
 
 // String returns a descriptive string of all flags successfully parsed.
-// func (o *OpenFlag) String() string {
-// 	if o.flag.NFlag() > 0 {
-// 		s := []string{}
-// 		o.flag.Visit(func(f *flag.Flag) {
-// 			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
-// 		})
-// 		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
-// 	} else {
-// 		return "(none)"
-// 	}
-// }
+func (o *OpenFlag) String() string {
+	if o.flag.NFlag() > 0 {
+		s := []string{}
+		o.flag.Visit(func(f *flag.Flag) {
+			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
+		})
+		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
+	} else {
+		return "(none)"
+	}
+}
 
 // NewFT232H attempts to open a connection with the first MPSSE-capable USB
 // device matching flags given at the command line. Use -h to see all of the

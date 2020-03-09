@@ -14,6 +14,11 @@ type I2C struct {
 	config *i2cConfig
 }
 
+// String returns a descriptive string of an I²C interface.
+func (i2c *I2C) String() string {
+	return fmt.Sprintf("{ FT232H: %p, Config: %s }", i2c.device, i2c.config)
+}
+
 // I2CConfig holds all of the configuration settings for initializing an I²C
 // interface.
 type I2CConfig struct {
@@ -59,6 +64,13 @@ type i2cConfig struct {
 	noDelay   bool
 }
 
+// String returns a descriptive string of an i2cConfig.
+func (c i2cConfig) String() string {
+	return fmt.Sprintf("{ Clock: %q, Latency: \"%d ms\", Options: %s, "+
+		"BreakOnNACK: %t, NACKAfterRead: %t, NoUSBDelay: %t }",
+		c.clockRate, c.latency, c.options, c.breakNACK, c.readNACK, c.noDelay)
+}
+
 // i2cConfigDefault returns an i2cConfig struct stored in the private
 // configuration field of an I2C instance with the default settings for all
 // fields.
@@ -92,13 +104,30 @@ func (c *i2cConfig) I2CConfig() *I2CConfig {
 // I2CClockRate holds one of the supported I²C clock rate constants.
 type I2CClockRate uint32
 
-// Constants defining the supported I²C clock rates.
+// Constants defining the supported I²C clock rates.%d ms
 const (
 	I2CClockStandardMode  I2CClockRate = 100000  // 100 kb/sec
 	I2CClockFastMode      I2CClockRate = 400000  // 400 kb/sec
 	I2CClockFastModePlus  I2CClockRate = 1000000 // 1000 kb/sec
 	I2CClockHighSpeedMode I2CClockRate = 3400000 // 3.4 Mb/sec
 )
+
+// String returns a descriptive string of an I2CClockRate.
+func (c I2CClockRate) String() string {
+	switch c {
+	case I2CClockStandardMode:
+		return "Standard mode (100 KHz)"
+	case I2CClockFastMode:
+		return "Fast mode (400 KHz)"
+	case I2CClockFastModePlus:
+		return "Fast mode plus (1000 KHz)"
+	case I2CClockHighSpeedMode:
+		return "High-speed mode (3.4 MHz)"
+	default:
+		return fmt.Sprintf("Unsupported mode (%d Hz)", c)
+	}
+
+}
 
 // I2COption holds all of the dynamic configuration settings that can be changed
 // while an I²C interface is open.
@@ -110,6 +139,14 @@ type I2COption struct {
 
 // i2cOption stores the various I²C configuration options as a 32-bit bitmap.
 type i2cOption uint32
+
+// String returns a descriptive string of an i2cOption.
+func (o i2cOption) String() string {
+	return fmt.Sprintf("{ 3-PhaseClock: %t, LowDriveOnly: %t }",
+		(o&i2cClock3PhaseMask) == i2cClock3PhaseEnable,
+		(o&i2cLowDriveOnlyMask) == i2cLowDriveOnlyEnable,
+	)
+}
 
 // Constants defining the options for I²C 3-phase clocking (enabled by default).
 const (
