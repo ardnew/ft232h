@@ -1,0 +1,65 @@
+language: go
+
+go:
+        - 1.11.x
+        - 1.12.x
+        - 1.13.x
+        - 1.14.x
+        - master
+
+addons:
+        apt:
+                packages:
+                        - gcc-x86_64-linux-gnu
+                        - binutils-x86_64-linux-gnu
+                        - gcc-i686-linux-gnu
+                        - binutils-i686-linux-gnu
+                        - gcc-aarch64-linux-gnu
+                        - binutils-aarch64-linux-gnu
+                        - gcc-arm-linux-gnueabihf
+                        - binutils-arm-linux-gnueabihf
+
+jobs:
+        include:
+                - name: "linux-amd64"
+                  arch: amd64
+                  os: linux
+                  dist: bionic
+                  env:
+                          - platform=platform=linux-amd64
+                          - cross=
+                - name: "linux-386"
+                  arch: amd64
+                  os: linux
+                  dist: bionic
+                  env:
+                          - platform=platform=linux-386
+                          - cross=cross=i686-linux-gnu-
+                - name: "linux-arm64"
+                  arch: arm64
+                  os: linux
+                  dist: bionic
+                  env:
+                          - platform=platform=linux-arm64
+                          - cross=cross=aarch64-linux-gnu-
+                - name: "linux-arm"
+                  arch: arm64
+                  os: linux
+                  dist: bionic
+                  env:
+                          - platform=platform=linux-arm
+                          - cross=cross=arm-linux-gnueabihf-
+                - name: "darwin-amd64"
+                  arch: amd64
+                  os: osx
+                  osx_image: xcode11.3
+                  env:
+                          - platform=platform=darwin-amd64
+                          - cross=
+
+
+script: 
+        - pushd native/src
+        - make ${platform} ${cross}
+        - popd
+        - go test -v -short -count=1 -args ./... 
