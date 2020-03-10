@@ -10,10 +10,8 @@ go:
 addons:
         apt:
                 packages:
-                        - gcc-x86_64-linux-gnu
-                        - binutils-x86_64-linux-gnu
-                        - gcc-i686-linux-gnu
-                        - binutils-i686-linux-gnu
+                        - gcc-multilib
+                        - binutils-multilib
                         - gcc-aarch64-linux-gnu
                         - binutils-aarch64-linux-gnu
                         - gcc-arm-linux-gnueabihf
