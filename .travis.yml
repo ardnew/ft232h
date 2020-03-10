@@ -7,73 +7,64 @@ go:
         - 1.14.x
         - master
 
+arch:
+        - amd64
+        - arm64
+
+os:
+        - linux
+        - osx
+
+env:
+        - platform=linux-amd64
+        - platform=linux-386 cross=i686-linux-gnu- mach=i386
+        - platform=linux-arm64 cross=aarch64-linux-gnu-
+        - platform=linux-arm cross=arm-linux-gnueabihf- mach=armhf
+        - platform=darwin-amd64
+
 jobs:
         fast_finish: true
-        include:
-                - name: "linux-amd64"
-                  arch: amd64
+        exclude:
+                - if: arch = amd64
                   os: linux
-                  dist: bionic
-                  compiler: gcc
-                  env:
-                          - platform=linux-amd64
-                          - cross=
-                          - usearch=
-                - name: "linux-386"
-                  arch: amd64
-                  os: linux
-                  dist: bionic
-                  env:
-                          - platform=linux-386
-                          - cross=i686-linux-gnu-
-                          - usearch="setarch i386 --verbose --32bit"
-                  before_install:
-                          - sudo dpkg --add-architecture i386
-                          - sudo apt update -yq
-                          - sudo apt install gcc:i386 binutils:i386 libc6:i386
-                - name: "linux-arm64"
-                  arch: arm64
-                  os: linux
-                  dist: bionic
-                  env:
-                          - platform=linux-arm64
-                          - cross=aarch64-linux-gnu-
-                          - usearch=
-                  before_install:
-                          - sudo apt update -yq
-                          - sudo apt install gcc binutils 
-                - name: "linux-arm"
-                  arch: arm64
-                  os: linux
-                  dist: bionic
-                  env:
-                          - platform=linux-arm
-                          - cross=arm-linux-gnueabihf-
-                          - usearch="setarch linux32 --verbose --32bit"
-                  before_install:
-                          - sudo dpkg --add-architecture armhf
-                          - sudo apt update -yq
-                          - sudo apt install gcc:armhf binutils:armhf libc6:armhf
-                - name: "darwin-amd64"
-                  arch: amd64
-                  os: osx
-                  osx_image: xcode11.3
-                  env:
-                          - platform=darwin-amd64
-                          - cross=
-                          - usearch=
+                  env(platform) =~ arm|darwin
 
-before_script:
-        - |
-                if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-                        dpkg --print-architecture
-                        dpkg --print-foreign-architectures 
-                        setarch --list
-                        ${usearch} uname -a
-                fi
+                - if: arch = amd64
+                  os: osx
+                  env(platform) =~ linux
+
+                - if: arch = arm64
+                  os: linux
+                  env(platform) =~ amd|386
+
+                - if: arch = arm64
+                  os: osx
+
+
+                  #                          - usearch="setarch i386 --verbose --32bit"
+                            #                          - sudo dpkg --add-architecture i386
+                            #                          - sudo apt update -yq
+                            #                          - sudo apt install gcc:i386 binutils:i386 libc6:i386
+
+                            #                          - sudo apt update -yq
+                            #                          - sudo apt install gcc binutils 
+
+                            #                          - usearch="setarch linux32 --verbose --32bit"
+                            #                          - sudo dpkg --add-architecture armhf
+                            #                          - sudo apt update -yq
+                            #                          - sudo apt install gcc:armhf binutils:armhf libc6:armhf
+
+                  #before_script:
+        #        - |
+                #                if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+                #                        dpkg --print-architecture
+                #                        dpkg --print-foreign-architectures 
+                #                        setarch --list
+                #                        ${usearch} uname -a
+                #                fi
 
 script: 
         - pushd native/src
-        - ${usearch} make platform=${platform} cross=${cross} clean build
+        - env(usearch) make platform=env(platform) cross=env(cross) clean build
         - popd
-        - ${usearch} go test -v -short -count=1 -args ./... 
+        - env(usearch) go test -v -short -count=1 -args ./... 
