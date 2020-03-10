@@ -18,6 +18,7 @@ addons:
                         - binutils-arm-linux-gnueabihf
 
 jobs:
+        fast_finish: true
         include:
                 - name: "linux-amd64"
                   arch: amd64
