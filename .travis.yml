@@ -7,16 +7,6 @@ go:
         - 1.14.x
         - master
 
-addons:
-        apt:
-                packages:
-                        - gcc-multilib
-                        - binutils
-                        - gcc-aarch64-linux-gnu
-                        - binutils-aarch64-linux-gnu
-                        - gcc-arm-linux-gnueabihf
-                        - binutils-arm-linux-gnueabihf
-
 jobs:
         fast_finish: true
         include:
@@ -24,41 +14,66 @@ jobs:
                   arch: amd64
                   os: linux
                   dist: bionic
+                  compiler: gcc
                   env:
-                          - platform=platform=linux-amd64
+                          - platform=linux-amd64
                           - cross=
+                          - usearch=
                 - name: "linux-386"
                   arch: amd64
                   os: linux
                   dist: bionic
                   env:
-                          - platform=platform=linux-386
-                          - cross=cross=i686-linux-gnu-
+                          - platform=linux-386
+                          - cross=i686-linux-gnu-
+                          - usearch="setarch i386 --verbose --32bit"
+                  before_install:
+                          - sudo dpkg --add-architecture i386
+                          - sudo apt update -yq
+                          - sudo apt install gcc:i386 binutils:i386 libc6:i386
                 - name: "linux-arm64"
                   arch: arm64
                   os: linux
                   dist: bionic
                   env:
-                          - platform=platform=linux-arm64
-                          - cross=cross=aarch64-linux-gnu-
+                          - platform=linux-arm64
+                          - cross=aarch64-linux-gnu-
+                          - usearch=
+                  before_install:
+                          - sudo apt update -yq
+                          - sudo apt install gcc binutils 
                 - name: "linux-arm"
                   arch: arm64
                   os: linux
                   dist: bionic
                   env:
-                          - platform=platform=linux-arm
-                          - cross=cross=arm-linux-gnueabihf-
+                          - platform=linux-arm
+                          - cross=arm-linux-gnueabihf-
+                          - usearch="setarch linux32 --verbose --32bit"
+                  before_install:
+                          - sudo dpkg --add-architecture armhf
+                          - sudo apt update -yq
+                          - sudo apt install gcc:armhf binutils:armhf libc6:armhf
                 - name: "darwin-amd64"
                   arch: amd64
                   os: osx
                   osx_image: xcode11.3
                   env:
-                          - platform=platform=darwin-amd64
+                          - platform=darwin-amd64
                           - cross=
+                          - usearch=
 
+before_script:
+        - |
+                if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+                        dpkg --print-architecture
+                        dpkg --print-foreign-architectures 
+                        setarch --list
+                        ${usearch} uname -a
+                fi
 
 script: 
         - pushd native/src
-        - make ${platform} ${cross}
+        - ${usearch} make platform=${platform} cross=${cross} clean build
         - popd
-        - go test -v -short -count=1 -args ./... 
+        - ${usearch} go test -v -short -count=1 -args ./... 
