@@ -26,7 +26,7 @@ var (
 				os:   "linux",
 				env: []*Env{
 					&Env{platform: "linux-amd64", compiler: "gcc"},
-					&Env{platform: "linux-386", compiler: "gcc",
+					&Env{platform: "linux-386", compiler: "gcc", pkgs: []string{"gcc-multilib"},
 						cross: "i686-linux-gnu-", mach: "i386", setarch: "setarch i386 --verbose --32bit"},
 				},
 			},
@@ -35,7 +35,7 @@ var (
 				os:   "linux",
 				env: []*Env{
 					&Env{platform: "linux-arm64", compiler: "gcc"},
-					&Env{platform: "linux-arm", compiler: "gcc",
+					&Env{platform: "linux-arm", compiler: "gcc", pkgs: []string{"crossbuild-essential-armhf", "libc6:armhf"},
 						cross: "arm-linux-gnueabihf-", mach: "armhf", setarch: "setarch linux32 --verbose --32bit"},
 				},
 			},
@@ -51,7 +51,7 @@ var (
 			"pushd native/src",
 			"${setarch} make platform=${platform} cross=${cross} clean build",
 			"popd",
-			"${setarch} go test -v short -count=1 -args ./...",
+			"${setarch} go test -v -short -count=1 -args ./...",
 		},
 	}
 )
@@ -78,6 +78,7 @@ type Version struct {
 type Env struct {
 	platform string
 	compiler string
+	pkgs     []string
 	cross    string
 	mach     string
 	setarch  string
@@ -166,7 +167,9 @@ func (v *Version) jobsLine(ind indent) *line {
 					ln.add(ind.by(3), "before_install:")
 					ln.add(ind.by(4), "- sudo dpkg --add-architecture %s", targ.mach)
 					ln.add(ind.by(4), "- sudo apt -yq update")
-					ln.add(ind.by(4), "- sudo apt -yq install %s:%s libc6:%s", targ.compiler, targ.mach, targ.mach)
+					if nil != targ.pkgs && len(targ.pkgs) > 0 {
+						ln.add(ind.by(4), "- sudo apt -yq install %s", strings.Join(targ.pkgs, " "))
+					}
 				}
 			}
 		}

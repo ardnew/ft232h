@@ -31,7 +31,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture i386
         - sudo apt -yq update
-        - sudo apt -yq install gcc:i386 libc6:i386
+        - sudo apt -yq install gcc-multilib
     - name: "linux-arm64 (go 1.11.x)"
       go: "1.11.x"
       arch: arm64
@@ -52,7 +52,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture armhf
         - sudo apt -yq update
-        - sudo apt -yq install gcc:armhf libc6:armhf
+        - sudo apt -yq install crossbuild-essential-armhf libc6:armhf
     - name: "darwin-amd64 (go 1.11.x)"
       go: "1.11.x"
       arch: amd64
@@ -80,7 +80,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture i386
         - sudo apt -yq update
-        - sudo apt -yq install gcc:i386 libc6:i386
+        - sudo apt -yq install gcc-multilib
     - name: "linux-arm64 (go 1.12.x)"
       go: "1.12.x"
       arch: arm64
@@ -101,7 +101,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture armhf
         - sudo apt -yq update
-        - sudo apt -yq install gcc:armhf libc6:armhf
+        - sudo apt -yq install crossbuild-essential-armhf libc6:armhf
     - name: "darwin-amd64 (go 1.12.x)"
       go: "1.12.x"
       arch: amd64
@@ -129,7 +129,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture i386
         - sudo apt -yq update
-        - sudo apt -yq install gcc:i386 libc6:i386
+        - sudo apt -yq install gcc-multilib
     - name: "linux-arm64 (go 1.13.x)"
       go: "1.13.x"
       arch: arm64
@@ -150,7 +150,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture armhf
         - sudo apt -yq update
-        - sudo apt -yq install gcc:armhf libc6:armhf
+        - sudo apt -yq install crossbuild-essential-armhf libc6:armhf
     - name: "darwin-amd64 (go 1.13.x)"
       go: "1.13.x"
       arch: amd64
@@ -178,7 +178,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture i386
         - sudo apt -yq update
-        - sudo apt -yq install gcc:i386 libc6:i386
+        - sudo apt -yq install gcc-multilib
     - name: "linux-arm64 (go 1.14.x)"
       go: "1.14.x"
       arch: arm64
@@ -199,7 +199,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture armhf
         - sudo apt -yq update
-        - sudo apt -yq install gcc:armhf libc6:armhf
+        - sudo apt -yq install crossbuild-essential-armhf libc6:armhf
     - name: "darwin-amd64 (go 1.14.x)"
       go: "1.14.x"
       arch: amd64
@@ -227,7 +227,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture i386
         - sudo apt -yq update
-        - sudo apt -yq install gcc:i386 libc6:i386
+        - sudo apt -yq install gcc-multilib
     - name: "linux-arm64 (go master)"
       go: "master"
       arch: arm64
@@ -248,7 +248,7 @@ jobs:
       before_install:
         - sudo dpkg --add-architecture armhf
         - sudo apt -yq update
-        - sudo apt -yq install gcc:armhf libc6:armhf
+        - sudo apt -yq install crossbuild-essential-armhf libc6:armhf
     - name: "darwin-amd64 (go master)"
       go: "master"
       arch: amd64
@@ -261,5 +261,5 @@ script:
   - pushd native/src
   - ${setarch} make platform=${platform} cross=${cross} clean build
   - popd
-  - ${setarch} go test -v short -count=1 -args ./...
+  - ${setarch} go test -v -short -count=1 -args ./...
 
