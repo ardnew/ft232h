@@ -2,42 +2,264 @@ version: ~> 2.1
 
 language: go
 
-go:
-  - 1.11.x
-  - 1.12.x
-  - 1.13.x
-  - 1.14.x
-  - master
-
-arch:
-  - amd64
-  - arm64
-
-os:
-  - linux
-  - osx
+os: linux
 
 dist: bionic
 
 osx_image: xcode11.3
 
-env:
-  - platform=linux-amd64
-  - platform=linux-386 cross=i686-linux-gnu- mach=i386
-  - platform=linux-arm64 cross=aarch64-linux-gnu-
-  - platform=linux-arm cross=arm-linux-gnueabihf- mach=armhf
-  - platform=darwin-amd64
-
 jobs:
   fast_finish: true
-  exclude:
-    - os: linux
-      if: ( env(TRAVIS_CPU_ARCH) = amd64 AND env(platform) =~ arm|darwin ) OR ( env(TRAVIS_CPU_ARCH) = arm64 AND env(platform) =~ amd|386|darwin )
-    - os: osx
-      if: ( env(TRAVIS_CPU_ARCH) = amd64 AND env(platform) =~ linux ) OR ( env(TRAVIS_CPU_ARCH) = arm64 )
+  include:
+    - name: "linux-amd64 (go 1.11.x)"
+      go: "1.11.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-amd64"
+    - name: "linux-386 (go 1.11.x)"
+      go: "1.11.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-386"
+        - cross="i686-linux-gnu-"
+        - mach="i386"
+        - setarch="setarch i386 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture i386
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:i386 libc6:i386
+    - name: "linux-arm64 (go 1.11.x)"
+      go: "1.11.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm64"
+    - name: "linux-arm (go 1.11.x)"
+      go: "1.11.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm"
+        - cross="arm-linux-gnueabihf-"
+        - mach="armhf"
+        - setarch="setarch linux32 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture armhf
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:armhf libc6:armhf
+    - name: "darwin-amd64 (go 1.11.x)"
+      go: "1.11.x"
+      arch: amd64
+      os: osx
+      compiler: gcc
+      env:
+        - platform="darwin-amd64"
+    - name: "linux-amd64 (go 1.12.x)"
+      go: "1.12.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-amd64"
+    - name: "linux-386 (go 1.12.x)"
+      go: "1.12.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-386"
+        - cross="i686-linux-gnu-"
+        - mach="i386"
+        - setarch="setarch i386 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture i386
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:i386 libc6:i386
+    - name: "linux-arm64 (go 1.12.x)"
+      go: "1.12.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm64"
+    - name: "linux-arm (go 1.12.x)"
+      go: "1.12.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm"
+        - cross="arm-linux-gnueabihf-"
+        - mach="armhf"
+        - setarch="setarch linux32 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture armhf
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:armhf libc6:armhf
+    - name: "darwin-amd64 (go 1.12.x)"
+      go: "1.12.x"
+      arch: amd64
+      os: osx
+      compiler: gcc
+      env:
+        - platform="darwin-amd64"
+    - name: "linux-amd64 (go 1.13.x)"
+      go: "1.13.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-amd64"
+    - name: "linux-386 (go 1.13.x)"
+      go: "1.13.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-386"
+        - cross="i686-linux-gnu-"
+        - mach="i386"
+        - setarch="setarch i386 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture i386
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:i386 libc6:i386
+    - name: "linux-arm64 (go 1.13.x)"
+      go: "1.13.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm64"
+    - name: "linux-arm (go 1.13.x)"
+      go: "1.13.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm"
+        - cross="arm-linux-gnueabihf-"
+        - mach="armhf"
+        - setarch="setarch linux32 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture armhf
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:armhf libc6:armhf
+    - name: "darwin-amd64 (go 1.13.x)"
+      go: "1.13.x"
+      arch: amd64
+      os: osx
+      compiler: gcc
+      env:
+        - platform="darwin-amd64"
+    - name: "linux-amd64 (go 1.14.x)"
+      go: "1.14.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-amd64"
+    - name: "linux-386 (go 1.14.x)"
+      go: "1.14.x"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-386"
+        - cross="i686-linux-gnu-"
+        - mach="i386"
+        - setarch="setarch i386 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture i386
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:i386 libc6:i386
+    - name: "linux-arm64 (go 1.14.x)"
+      go: "1.14.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm64"
+    - name: "linux-arm (go 1.14.x)"
+      go: "1.14.x"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm"
+        - cross="arm-linux-gnueabihf-"
+        - mach="armhf"
+        - setarch="setarch linux32 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture armhf
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:armhf libc6:armhf
+    - name: "darwin-amd64 (go 1.14.x)"
+      go: "1.14.x"
+      arch: amd64
+      os: osx
+      compiler: gcc
+      env:
+        - platform="darwin-amd64"
+    - name: "linux-amd64 (go master)"
+      go: "master"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-amd64"
+    - name: "linux-386 (go master)"
+      go: "master"
+      arch: amd64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-386"
+        - cross="i686-linux-gnu-"
+        - mach="i386"
+        - setarch="setarch i386 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture i386
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:i386 libc6:i386
+    - name: "linux-arm64 (go master)"
+      go: "master"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm64"
+    - name: "linux-arm (go master)"
+      go: "master"
+      arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - platform="linux-arm"
+        - cross="arm-linux-gnueabihf-"
+        - mach="armhf"
+        - setarch="setarch linux32 --verbose --32bit"
+      before_install:
+        - sudo dpkg --add-architecture armhf
+        - sudo apt -yq update
+        - sudo apt -yq install gcc:armhf libc6:armhf
+    - name: "darwin-amd64 (go master)"
+      go: "master"
+      arch: amd64
+      os: osx
+      compiler: gcc
+      env:
+        - platform="darwin-amd64"
 
 script:
   - pushd native/src
-  - ${usearch} make platform=${platform} cross=${cross} clean build
+  - ${setarch} make platform=${platform} cross=${cross} clean build
   - popd
-  - ${usearch} go test -v -short -count=1 -args ./...
+  - ${setarch} go test -v short -count=1 -args ./...
+
