@@ -1,3 +1,5 @@
+version: ~> 2.1
+
 language: go
 
 go:
@@ -9,15 +11,33 @@ go:
 
 arch:
   - amd64
+  - arm64
 
 os:
   - linux
+  - osx
+
+dist: bionic
+
+osx_image: xcode11.3
 
 env:
   - platform=linux-amd64
+  - platform=linux-386 cross=i686-linux-gnu- mach=i386
+  - platform=linux-arm64 cross=aarch64-linux-gnu-
+  - platform=linux-arm cross=arm-linux-gnueabihf- mach=armhf
+  - platform=darwin-amd64
+
+jobs:
+  fast_finish: true
+  exclude:
+    - os: linux
+      if: ( env(TRAVIS_CPU_ARCH) = amd64 AND env(platform) =~ arm|darwin ) OR ( env(TRAVIS_CPU_ARCH) = arm64 AND env(platform) =~ amd|386|darwin )
+    - os: osx
+      if: ( env(TRAVIS_CPU_ARCH) = amd64 AND env(platform) =~ linux ) OR ( env(TRAVIS_CPU_ARCH) = arm64 )
 
 script:
   - pushd native/src
-  - $usearch make platform=$platform cross=$cross clean build
+  - ${usearch} make platform=${platform} cross=${cross} clean build
   - popd
-  - $usearch go test -v -short -count=1 -args ./...
+  - ${usearch} go test -v -short -count=1 -args ./...
