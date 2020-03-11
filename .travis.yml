@@ -18,6 +18,6 @@ env:
 
 script:
 	- pushd native/src
-	- env(usearch) make platform=env(platform) cross=env(cross) clean build
+	- $usearch make platform=$platform cross=$cross clean build
 	- popd
-	- env(usearch) go test -v -short -count=1 -args ./...
+	- $usearch go test -v -short -count=1 -args ./...
