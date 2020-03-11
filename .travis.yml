@@ -1,23 +1,23 @@
 language: go
 
 go:
-	- 1.11.x
-	- 1.12.x
-	- 1.13.x
-	- 1.14.x
-	- master
+  - 1.11.x
+  - 1.12.x
+  - 1.13.x
+  - 1.14.x
+  - master
 
 arch:
-	- amd64
+  - amd64
 
 os:
-	- linux
+  - linux
 
 env:
-	- platform=linux-amd64
+  - platform=linux-amd64
 
 script:
-	- pushd native/src
-	- $usearch make platform=$platform cross=$cross clean build
-	- popd
-	- $usearch go test -v -short -count=1 -args ./...
+  - pushd native/src
+  - $usearch make platform=$platform cross=$cross clean build
+  - popd
+  - $usearch go test -v -short -count=1 -args ./...
