@@ -47,13 +47,8 @@ var (
 				},
 			},
 		},
-		preinstall: []string{
-			"pushd native/src",
-			"${setarch} make ${makevars[@]} clean build",
-			"popd",
-		},
 		script: []string{
-			"${setarch} go test -v -short -count=1 -args ./...",
+			"go test -v -short -count=1 -args ./...",
 		},
 	}
 )
@@ -156,27 +151,8 @@ func (v *Version) jobsLine(ind *indent) *line {
 				ln.add(ind.by(2), "arch: %s", targ.arch)
 				ln.add(ind.by(2), "os: %s", targ.os)
 				ln.add(ind.by(2), "compiler: %s", env.compiler)
-				ln.add(ind.by(2), "env:")
-				makevars := []string{}
-				if "" != env.platform {
-					makevars = append(makevars, fmt.Sprintf("platform=%q", env.platform))
-				}
-				if "" != env.cross {
-					makevars = append(makevars, fmt.Sprintf("cross=%q", env.cross))
-				}
-				ln.add(ind.by(3), "- makevars=( %s )", reduce(makevars, " ",
-					func(s string) string { return fmt.Sprintf("%q", s) }))
-				for _, v := range makevars {
-					ln.add(ind.by(3), "- "+v)
-				}
-				if "" != env.mach {
-					ln.add(ind.by(3), "- mach=%q", env.mach)
-				}
-				if "" != env.setarch {
-					ln.add(ind.by(3), "- setarch=%q", env.setarch)
-				}
 				*ln = append(*ln, *v.preinstallLine(ind.by(2), env)...)
-				*ln = append(*ln, *v.scriptLine(ind.by(2))...)
+				*ln = append(*ln, *v.scriptLine(ind.by(2), env)...)
 			}
 		}
 	}
@@ -184,11 +160,14 @@ func (v *Version) jobsLine(ind *indent) *line {
 }
 
 func (v *Version) preinstallLine(ind *indent, env *Env) *line {
+
 	// ---------------------------------------------------------------------- //
 	//  pre-install phase                                                     //
 	// ---------------------------------------------------------------------- //
 	ln := &line{}
 	ln.add(ind, "before_install:")
+
+	// -- fetch library recompile dependencies -----------------------------
 	if "" != env.cross && "" != env.mach && "" != env.setarch {
 		ln.add(ind.by(1), "- sudo dpkg --add-architecture %s", env.mach)
 		ln.add(ind.by(1), "- sudo apt -yq update")
@@ -196,13 +175,19 @@ func (v *Version) preinstallLine(ind *indent, env *Env) *line {
 			ln.add(ind.by(1), "- sudo apt -yq install %s", strings.Join(env.pkgs, " "))
 		}
 	}
+
+	// -- library recompile build commands ----------------------------------
+	ln.add(ind.by(1), "- pushd native/src")
+	ln.add(ind.by(1), "- %s make platform=%q cross=%q clean build", env.setarch, env.platform, env.cross)
+	ln.add(ind.by(1), "- popd")
+
 	// -- target-specific pre-install commands ------------------------------
 	if nil != env.preinstall && len(env.preinstall) > 0 {
 		for _, s := range env.preinstall {
 			ln.add(ind.by(1), "- %s", s)
 		}
-
 	}
+
 	// -- common pre-install commands, shared by all targets ----------------
 	if nil != v.preinstall && len(v.preinstall) > 0 {
 		for _, s := range v.preinstall {
@@ -212,9 +197,15 @@ func (v *Version) preinstallLine(ind *indent, env *Env) *line {
 	return ln
 }
 
-func (v *Version) scriptLine(ind *indent) *line {
+func (v *Version) scriptLine(ind *indent, env *Env) *line {
+
+	// ---------------------------------------------------------------------- //
+	//  test build phase                                                      //
+	// ---------------------------------------------------------------------- //
 	ln := &line{}
 	ln.add(ind, "script:")
+
+	// common script commands, shared by all targets ------------------------
 	for _, s := range v.script {
 		ln.add(ind.by(1), "- %s", s)
 	}
