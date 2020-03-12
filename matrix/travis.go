@@ -47,10 +47,12 @@ var (
 				},
 			},
 		},
-		script: []string{
+		preinstall: []string{
 			"pushd native/src",
-			"${setarch} make platform=${platform} cross=${cross} clean build",
+			"${setarch} make ${makevars[@]} clean build",
 			"popd",
+		},
+		script: []string{
 			"${setarch} go test -v -short -count=1 -args ./...",
 		},
 	}
@@ -64,24 +66,27 @@ func main() {
 }
 
 type Version struct {
-	travis  string
-	lang    string
-	os      string
-	langver []string
-	distro  string
-	xcode   string
-	fast    bool
-	target  []*Target
-	script  []string
+	travis     string
+	lang       string
+	os         string
+	langver    []string
+	distro     string
+	xcode      string
+	fast       bool
+	target     []*Target
+	preinstall []string
+	script     []string
 }
 
 type Env struct {
-	platform string
-	compiler string
-	pkgs     []string
-	cross    string
-	mach     string
-	setarch  string
+	platform   string
+	compiler   string
+	pkgs       []string
+	cross      string
+	mach       string
+	setarch    string
+	preinstall []string
+	script     []string
 }
 
 type Target struct {
@@ -101,7 +106,6 @@ func (v *Version) line() *line {
 	*ln = append(*ln, *v.distLine(ind).new()...)
 	*ln = append(*ln, *v.osximageLine(ind).new()...)
 	*ln = append(*ln, *v.jobsLine(ind).new()...)
-	*ln = append(*ln, *v.scriptLine(ind).new()...)
 
 	return ln
 }
@@ -142,37 +146,67 @@ func (v *Version) jobsLine(ind *indent) *line {
 	ln.add(ind.by(1), "fast_finish: %t", v.fast)
 	ln.add(ind.by(1), "include:")
 	for _, lang := range v.langver {
-		for _, host := range v.target {
-			for _, targ := range host.env {
-				ln.add(ind.by(2), "- name: %q", fmt.Sprintf("%s (%s %s)", targ.platform, v.lang, lang))
-				//ln.add(ind.by(3), "language: %s", v.lang)
+		for _, targ := range v.target {
+			for _, env := range targ.env {
+				// -------------------------------------------------------------------------
+				//  job configuration
+				// -------------------------------------------------------------------------
+				ln.add(ind.by(2), "- name: %q", fmt.Sprintf("%s (%s %s)", env.platform, v.lang, lang))
 				ln.add(ind.by(2), "%s: %q", v.lang, lang)
-				ln.add(ind.by(2), "arch: %s", host.arch)
-				ln.add(ind.by(2), "os: %s", host.os)
-				ln.add(ind.by(2), "compiler: %s", targ.compiler)
+				ln.add(ind.by(2), "arch: %s", targ.arch)
+				ln.add(ind.by(2), "os: %s", targ.os)
+				ln.add(ind.by(2), "compiler: %s", env.compiler)
 				ln.add(ind.by(2), "env:")
-				if "" != targ.platform {
-					ln.add(ind.by(3), "- platform=%q", targ.platform)
+				makevars := []string{}
+				if "" != env.platform {
+					makevars = append(makevars, fmt.Sprintf("platform=%q", env.platform))
 				}
-				if "" != targ.cross {
-					ln.add(ind.by(3), "- cross=%q", targ.cross)
+				if "" != env.cross {
+					makevars = append(makevars, fmt.Sprintf("cross=%q", env.cross))
 				}
-				if "" != targ.mach {
-					ln.add(ind.by(3), "- mach=%q", targ.mach)
+				ln.add(ind.by(3), "- makevars=( %s )", reduce(makevars, " ",
+					func(s string) string { return fmt.Sprintf("%q", s) }))
+				for _, v := range makevars {
+					ln.add(ind.by(3), "- "+v)
 				}
-				if "" != targ.setarch {
-					ln.add(ind.by(3), "- setarch=%q", targ.setarch)
+				if "" != env.mach {
+					ln.add(ind.by(3), "- mach=%q", env.mach)
 				}
-				if "" != targ.cross && "" != targ.mach && "" != targ.setarch {
-					ln.add(ind.by(2), "before_install:")
-					ln.add(ind.by(3), "- apt search gcc")
-					ln.add(ind.by(3), "- sudo dpkg --add-architecture %s", targ.mach)
-					ln.add(ind.by(3), "- sudo apt -yq update")
-					if nil != targ.pkgs && len(targ.pkgs) > 0 {
-						ln.add(ind.by(3), "- sudo apt -yq install %s", strings.Join(targ.pkgs, " "))
-					}
+				if "" != env.setarch {
+					ln.add(ind.by(3), "- setarch=%q", env.setarch)
 				}
+				*ln = append(*ln, *v.preinstallLine(ind.by(2), env)...)
+				*ln = append(*ln, *v.scriptLine(ind.by(2))...)
 			}
+		}
+	}
+	return ln
+}
+
+func (v *Version) preinstallLine(ind *indent, env *Env) *line {
+	// ---------------------------------------------------------------------- //
+	//  pre-install phase                                                     //
+	// ---------------------------------------------------------------------- //
+	ln := &line{}
+	ln.add(ind, "before_install:")
+	if "" != env.cross && "" != env.mach && "" != env.setarch {
+		ln.add(ind.by(1), "- sudo dpkg --add-architecture %s", env.mach)
+		ln.add(ind.by(1), "- sudo apt -yq update")
+		if nil != env.pkgs && len(env.pkgs) > 0 {
+			ln.add(ind.by(1), "- sudo apt -yq install %s", strings.Join(env.pkgs, " "))
+		}
+	}
+	// -- target-specific pre-install commands ------------------------------
+	if nil != env.preinstall && len(env.preinstall) > 0 {
+		for _, s := range env.preinstall {
+			ln.add(ind.by(1), "- %s", s)
+		}
+
+	}
+	// -- common pre-install commands, shared by all targets ----------------
+	if nil != v.preinstall && len(v.preinstall) > 0 {
+		for _, s := range v.preinstall {
+			ln.add(ind.by(1), "- %s", s)
 		}
 	}
 	return ln
@@ -185,6 +219,17 @@ func (v *Version) scriptLine(ind *indent) *line {
 		ln.add(ind.by(1), "- %s", s)
 	}
 	return ln
+}
+
+func reduce(s []string, d string, f func(string) string) string {
+	if nil == f || nil == s || 0 == len(s) {
+		return ""
+	}
+	r := make([]string, len(s))
+	for i, e := range s {
+		r[i] = f(e)
+	}
+	return strings.Join(r, d)
 }
 
 type line []string
