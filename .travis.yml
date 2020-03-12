@@ -17,7 +17,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-amd64"' )
+          - makevars=( platform="linux-amd64" )
           - platform="linux-amd64"
         before_install:
           - pushd native/src
@@ -31,7 +31,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-386"' 'cross="i686-linux-gnu-"' )
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
           - platform="linux-386"
           - cross="i686-linux-gnu-"
           - mach="i386"
@@ -51,7 +51,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm64"' )
+          - makevars=( platform="linux-arm64" )
           - platform="linux-arm64"
         before_install:
           - pushd native/src
@@ -65,7 +65,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm"' 'cross="arm-linux-gnueabihf-"' )
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
           - platform="linux-arm"
           - cross="arm-linux-gnueabihf-"
           - mach="armhf"
@@ -85,7 +85,7 @@ jobs:
         os: osx
         compiler: gcc
         env:
-          - makevars=( 'platform="darwin-amd64"' )
+          - makevars=( platform="darwin-amd64" )
           - platform="darwin-amd64"
         before_install:
           - pushd native/src
@@ -99,7 +99,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-amd64"' )
+          - makevars=( platform="linux-amd64" )
           - platform="linux-amd64"
         before_install:
           - pushd native/src
@@ -113,7 +113,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-386"' 'cross="i686-linux-gnu-"' )
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
           - platform="linux-386"
           - cross="i686-linux-gnu-"
           - mach="i386"
@@ -133,7 +133,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm64"' )
+          - makevars=( platform="linux-arm64" )
           - platform="linux-arm64"
         before_install:
           - pushd native/src
@@ -147,7 +147,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm"' 'cross="arm-linux-gnueabihf-"' )
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
           - platform="linux-arm"
           - cross="arm-linux-gnueabihf-"
           - mach="armhf"
@@ -167,7 +167,7 @@ jobs:
         os: osx
         compiler: gcc
         env:
-          - makevars=( 'platform="darwin-amd64"' )
+          - makevars=( platform="darwin-amd64" )
           - platform="darwin-amd64"
         before_install:
           - pushd native/src
@@ -181,7 +181,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-amd64"' )
+          - makevars=( platform="linux-amd64" )
           - platform="linux-amd64"
         before_install:
           - pushd native/src
@@ -195,7 +195,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-386"' 'cross="i686-linux-gnu-"' )
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
           - platform="linux-386"
           - cross="i686-linux-gnu-"
           - mach="i386"
@@ -215,7 +215,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm64"' )
+          - makevars=( platform="linux-arm64" )
           - platform="linux-arm64"
         before_install:
           - pushd native/src
@@ -229,7 +229,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm"' 'cross="arm-linux-gnueabihf-"' )
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
           - platform="linux-arm"
           - cross="arm-linux-gnueabihf-"
           - mach="armhf"
@@ -249,7 +249,7 @@ jobs:
         os: osx
         compiler: gcc
         env:
-          - makevars=( 'platform="darwin-amd64"' )
+          - makevars=( platform="darwin-amd64" )
           - platform="darwin-amd64"
         before_install:
           - pushd native/src
@@ -263,7 +263,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-amd64"' )
+          - makevars=( platform="linux-amd64" )
           - platform="linux-amd64"
         before_install:
           - pushd native/src
@@ -277,7 +277,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-386"' 'cross="i686-linux-gnu-"' )
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
           - platform="linux-386"
           - cross="i686-linux-gnu-"
           - mach="i386"
@@ -297,7 +297,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm64"' )
+          - makevars=( platform="linux-arm64" )
           - platform="linux-arm64"
         before_install:
           - pushd native/src
@@ -311,7 +311,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm"' 'cross="arm-linux-gnueabihf-"' )
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
           - platform="linux-arm"
           - cross="arm-linux-gnueabihf-"
           - mach="armhf"
@@ -331,7 +331,7 @@ jobs:
         os: osx
         compiler: gcc
         env:
-          - makevars=( 'platform="darwin-amd64"' )
+          - makevars=( platform="darwin-amd64" )
           - platform="darwin-amd64"
         before_install:
           - pushd native/src
@@ -345,7 +345,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-amd64"' )
+          - makevars=( platform="linux-amd64" )
           - platform="linux-amd64"
         before_install:
           - pushd native/src
@@ -359,7 +359,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-386"' 'cross="i686-linux-gnu-"' )
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
           - platform="linux-386"
           - cross="i686-linux-gnu-"
           - mach="i386"
@@ -379,7 +379,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm64"' )
+          - makevars=( platform="linux-arm64" )
           - platform="linux-arm64"
         before_install:
           - pushd native/src
@@ -393,7 +393,7 @@ jobs:
         os: linux
         compiler: gcc
         env:
-          - makevars=( 'platform="linux-arm"' 'cross="arm-linux-gnueabihf-"' )
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
           - platform="linux-arm"
           - cross="arm-linux-gnueabihf-"
           - mach="armhf"
@@ -413,7 +413,7 @@ jobs:
         os: osx
         compiler: gcc
         env:
-          - makevars=( 'platform="darwin-amd64"' )
+          - makevars=( platform="darwin-amd64" )
           - platform="darwin-amd64"
         before_install:
           - pushd native/src
