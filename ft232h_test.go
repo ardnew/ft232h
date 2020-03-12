@@ -24,8 +24,6 @@ func TestNewFT232H(t *testing.T) {
 		t.Fatalf("could not open device: %v", err)
 	}
 
-	ft.I2C.Init()
-
 	t.Logf("opened: %s", ft)
 
 	if nil != ft.open {

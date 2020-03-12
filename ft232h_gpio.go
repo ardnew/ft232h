@@ -21,7 +21,7 @@ type GPIOConfig struct {
 
 func (gpio *GPIO) String() string {
 
-	str := func(i int) string {
+	str := func(i uint) string {
 		set := func(u uint8) bool {
 			return (u & (1 << i)) > 0
 		}
@@ -40,7 +40,7 @@ func (gpio *GPIO) String() string {
 	}
 
 	s := []string{}
-	for i := 0; i < NumCPins; i++ {
+	for i := uint(0); i < NumCPins; i++ {
 		s = append(s, str(i))
 	}
 	return fmt.Sprintf("{ %s }", strings.Join(s, ", "))
