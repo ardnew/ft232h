@@ -20,11 +20,11 @@ func TestPin(t *testing.T) {
 				t.Fatalf("expected C(%d) to be valid", i)
 			}
 
-			if (1 << i) != d.Mask() {
-				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<i)
+			if (1 << uint(i)) != d.Mask() {
+				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<uint(i))
 			}
-			if (1 << i) != c.Mask() {
-				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<i)
+			if (1 << uint(i)) != c.Mask() {
+				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<uint(i))
 			}
 
 			if i != int(d.Pos()) {
