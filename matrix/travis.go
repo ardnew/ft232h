@@ -165,7 +165,7 @@ func (v *Version) jobsLine(ind *indent) *line {
 					makevars = append(makevars, fmt.Sprintf("cross=%q", env.cross))
 				}
 				ln.add(ind.by(3), "- makevars=( %s )", reduce(makevars, " ",
-					func(s string) string { return fmt.Sprintf("%q", s) }))
+					func(s string) string { return fmt.Sprintf("'%s'", s) }))
 				for _, v := range makevars {
 					ln.add(ind.by(3), "- "+v)
 				}
