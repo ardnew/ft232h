@@ -16,6 +16,12 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-amd64" )
+          - platform="linux-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-amd64" cross="" clean build
@@ -27,6 +33,15 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
+          - platform="linux-386"
+          - cross="i686-linux-gnu-"
+          - mach="i386"
+          - setarch="setarch i386 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture i386
           - sudo apt -yq update
@@ -41,6 +56,12 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm64" )
+          - platform="linux-arm64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-arm64" cross="" clean build
@@ -52,6 +73,15 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
+          - platform="linux-arm"
+          - cross="arm-linux-gnueabihf-"
+          - mach="armhf"
+          - setarch="setarch linux32 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture armhf
           - sudo apt -yq update
@@ -66,6 +96,12 @@ jobs:
         arch: amd64
         os: osx
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="darwin-amd64" )
+          - platform="darwin-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="darwin-amd64" cross="" clean build
@@ -77,6 +113,12 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-amd64" )
+          - platform="linux-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-amd64" cross="" clean build
@@ -88,6 +130,15 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
+          - platform="linux-386"
+          - cross="i686-linux-gnu-"
+          - mach="i386"
+          - setarch="setarch i386 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture i386
           - sudo apt -yq update
@@ -102,6 +153,12 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm64" )
+          - platform="linux-arm64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-arm64" cross="" clean build
@@ -113,6 +170,15 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
+          - platform="linux-arm"
+          - cross="arm-linux-gnueabihf-"
+          - mach="armhf"
+          - setarch="setarch linux32 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture armhf
           - sudo apt -yq update
@@ -127,6 +193,12 @@ jobs:
         arch: amd64
         os: osx
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="darwin-amd64" )
+          - platform="darwin-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="darwin-amd64" cross="" clean build
@@ -138,6 +210,12 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-amd64" )
+          - platform="linux-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-amd64" cross="" clean build
@@ -149,6 +227,15 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
+          - platform="linux-386"
+          - cross="i686-linux-gnu-"
+          - mach="i386"
+          - setarch="setarch i386 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture i386
           - sudo apt -yq update
@@ -163,6 +250,12 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm64" )
+          - platform="linux-arm64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-arm64" cross="" clean build
@@ -174,6 +267,15 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
+          - platform="linux-arm"
+          - cross="arm-linux-gnueabihf-"
+          - mach="armhf"
+          - setarch="setarch linux32 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture armhf
           - sudo apt -yq update
@@ -188,6 +290,12 @@ jobs:
         arch: amd64
         os: osx
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="darwin-amd64" )
+          - platform="darwin-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="darwin-amd64" cross="" clean build
@@ -199,6 +307,12 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-amd64" )
+          - platform="linux-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-amd64" cross="" clean build
@@ -210,6 +324,15 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
+          - platform="linux-386"
+          - cross="i686-linux-gnu-"
+          - mach="i386"
+          - setarch="setarch i386 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture i386
           - sudo apt -yq update
@@ -224,6 +347,12 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm64" )
+          - platform="linux-arm64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-arm64" cross="" clean build
@@ -235,6 +364,15 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
+          - platform="linux-arm"
+          - cross="arm-linux-gnueabihf-"
+          - mach="armhf"
+          - setarch="setarch linux32 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture armhf
           - sudo apt -yq update
@@ -249,6 +387,12 @@ jobs:
         arch: amd64
         os: osx
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="darwin-amd64" )
+          - platform="darwin-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="darwin-amd64" cross="" clean build
@@ -260,6 +404,12 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-amd64" )
+          - platform="linux-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-amd64" cross="" clean build
@@ -271,6 +421,15 @@ jobs:
         arch: amd64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-386" cross="i686-linux-gnu-" )
+          - platform="linux-386"
+          - cross="i686-linux-gnu-"
+          - mach="i386"
+          - setarch="setarch i386 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture i386
           - sudo apt -yq update
@@ -285,6 +444,12 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm64" )
+          - platform="linux-arm64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="linux-arm64" cross="" clean build
@@ -296,6 +461,15 @@ jobs:
         arch: arm64
         os: linux
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="linux-arm" cross="arm-linux-gnueabihf-" )
+          - platform="linux-arm"
+          - cross="arm-linux-gnueabihf-"
+          - mach="armhf"
+          - setarch="setarch linux32 --verbose --32bit"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - sudo dpkg --add-architecture armhf
           - sudo apt -yq update
@@ -310,6 +484,12 @@ jobs:
         arch: amd64
         os: osx
         compiler: gcc
+<<<<<<< HEAD
+=======
+        env:
+          - makevars=( platform="darwin-amd64" )
+          - platform="darwin-amd64"
+>>>>>>> 28fe29612fb5cd2189b0643cfed185a13f0019a8
         before_install:
           - pushd native/src
           -  make platform="darwin-amd64" cross="" clean build
