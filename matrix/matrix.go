@@ -13,7 +13,11 @@ func indentation() *indent {
 var (
 	// versions to test against
 	version = Version{
-		block:   []string{"dev"},
+		// elements are OR'd together to create a single condition
+		allowed: []string{
+			`(type != push)`,
+			`(branch =~ /^(master|v\d+\.\d+(\.\d+)?(-\S*)?)$/)`,
+		},
 		travis:  "~> 2.1",
 		lang:    "go",
 		os:      "linux",
@@ -62,7 +66,7 @@ func main() {
 }
 
 type Version struct {
-	block      []string
+	allowed    []string
 	travis     string
 	lang       string
 	os         string
@@ -98,23 +102,19 @@ func (v *Version) line() *line {
 	ind := indentation()
 
 	*ln = append(*ln, *v.travisLine(ind).new()...)
+	*ln = append(*ln, *v.allowedLine(ind).new()...)
 	*ln = append(*ln, *v.languageLine(ind).new()...)
 	*ln = append(*ln, *v.osLine(ind).new()...)
 	*ln = append(*ln, *v.distLine(ind).new()...)
 	*ln = append(*ln, *v.osximageLine(ind).new()...)
-	*ln = append(*ln, *v.blockList(ind).new()...)
 	*ln = append(*ln, *v.jobsLine(ind).new()...)
 
 	return ln
 }
 
-func (v *Version) blockList(ind *indent) *line {
+func (v *Version) allowedLine(ind *indent) *line {
 	ln := &line{}
-	ln.add(ind, "branches:")
-	ln.add(ind.by(1), "except:")
-	for _, b := range v.block {
-		ln.add(ind.by(2), "- %s", b)
-	}
+	ln.add(ind, "if: %s", strings.Join(v.allowed, " OR "))
 	return ln
 }
 
