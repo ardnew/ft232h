@@ -1,0 +1,319 @@
+version: ~> 2.1
+
+language: go
+
+os: linux
+
+dist: bionic
+
+osx_image: xcode11.3
+
+jobs:
+    fast_finish: true
+    include:
+      - name: "linux-amd64 (go 1.11.x)"
+        go: "1.11.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-386 (go 1.11.x)"
+        go: "1.11.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture i386
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-i686-linux-gnu libc-dev-i386-cross
+          - pushd native/src
+          - setarch i386 --verbose --32bit make platform="linux-386" cross="i686-linux-gnu-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm64 (go 1.11.x)"
+        go: "1.11.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-arm64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm (go 1.11.x)"
+        go: "1.11.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture armhf
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-arm-linux-gnueabihf libc-dev-armhf-cross
+          - pushd native/src
+          - setarch linux32 --verbose --32bit make platform="linux-arm" cross="arm-linux-gnueabihf-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "darwin-amd64 (go 1.11.x)"
+        go: "1.11.x"
+        arch: amd64
+        os: osx
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="darwin-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-amd64 (go 1.12.x)"
+        go: "1.12.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-386 (go 1.12.x)"
+        go: "1.12.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture i386
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-i686-linux-gnu libc-dev-i386-cross
+          - pushd native/src
+          - setarch i386 --verbose --32bit make platform="linux-386" cross="i686-linux-gnu-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm64 (go 1.12.x)"
+        go: "1.12.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-arm64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm (go 1.12.x)"
+        go: "1.12.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture armhf
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-arm-linux-gnueabihf libc-dev-armhf-cross
+          - pushd native/src
+          - setarch linux32 --verbose --32bit make platform="linux-arm" cross="arm-linux-gnueabihf-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "darwin-amd64 (go 1.12.x)"
+        go: "1.12.x"
+        arch: amd64
+        os: osx
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="darwin-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-amd64 (go 1.13.x)"
+        go: "1.13.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-386 (go 1.13.x)"
+        go: "1.13.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture i386
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-i686-linux-gnu libc-dev-i386-cross
+          - pushd native/src
+          - setarch i386 --verbose --32bit make platform="linux-386" cross="i686-linux-gnu-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm64 (go 1.13.x)"
+        go: "1.13.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-arm64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm (go 1.13.x)"
+        go: "1.13.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture armhf
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-arm-linux-gnueabihf libc-dev-armhf-cross
+          - pushd native/src
+          - setarch linux32 --verbose --32bit make platform="linux-arm" cross="arm-linux-gnueabihf-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "darwin-amd64 (go 1.13.x)"
+        go: "1.13.x"
+        arch: amd64
+        os: osx
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="darwin-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-amd64 (go 1.14.x)"
+        go: "1.14.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-386 (go 1.14.x)"
+        go: "1.14.x"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture i386
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-i686-linux-gnu libc-dev-i386-cross
+          - pushd native/src
+          - setarch i386 --verbose --32bit make platform="linux-386" cross="i686-linux-gnu-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm64 (go 1.14.x)"
+        go: "1.14.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-arm64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm (go 1.14.x)"
+        go: "1.14.x"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture armhf
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-arm-linux-gnueabihf libc-dev-armhf-cross
+          - pushd native/src
+          - setarch linux32 --verbose --32bit make platform="linux-arm" cross="arm-linux-gnueabihf-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "darwin-amd64 (go 1.14.x)"
+        go: "1.14.x"
+        arch: amd64
+        os: osx
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="darwin-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-amd64 (go master)"
+        go: "master"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-386 (go master)"
+        go: "master"
+        arch: amd64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture i386
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-i686-linux-gnu libc-dev-i386-cross
+          - pushd native/src
+          - setarch i386 --verbose --32bit make platform="linux-386" cross="i686-linux-gnu-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm64 (go master)"
+        go: "master"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="linux-arm64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "linux-arm (go master)"
+        go: "master"
+        arch: arm64
+        os: linux
+        compiler: gcc
+        before_install:
+          - sudo dpkg --add-architecture armhf
+          - sudo apt -yq update
+          - sudo apt -yq install gcc-arm-linux-gnueabihf libc-dev-armhf-cross
+          - pushd native/src
+          - setarch linux32 --verbose --32bit make platform="linux-arm" cross="arm-linux-gnueabihf-" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+      - name: "darwin-amd64 (go master)"
+        go: "master"
+        arch: amd64
+        os: osx
+        compiler: gcc
+        before_install:
+          - pushd native/src
+          -  make platform="darwin-amd64" cross="" clean build
+          - popd
+        script:
+          - go test -v -short -count=1 -args ./...
+

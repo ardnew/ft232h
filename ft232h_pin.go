@@ -10,7 +10,7 @@ import (
 type Pin interface {
 	IsMPSSE() bool     // true if DPin (port "D"), false if CPin (GPIO/port "C")
 	Mask() uint8       // the bitmask used to address the pin, equal to 1<<Pos()
-	Pos() int          // the ordinal pin number (0-7), equal to log2(Mask())
+	Pos() uint         // the ordinal pin number (0-7), equal to log2(Mask())
 	String() string    // the string representation "D#" or "C#", with # = Pos()
 	Valid() bool       // true IFF bitmask has exactly one bit set
 	Equals(q Pin) bool // true IFF p and q have equal port and bitmask
@@ -29,10 +29,10 @@ func (p DPin) Mask() uint8 { return uint8(p) }
 func (p CPin) Mask() uint8 { return uint8(p) }
 
 // Pos is the ordinal pin number (0-7) on port "D".
-func (p DPin) Pos() int { return int(math.Log2(float64(p))) }
+func (p DPin) Pos() uint { return uint(math.Log2(float64(p))) }
 
 // Pos is the ordinal pin number (0-7) on port "C".
-func (p CPin) Pos() int { return int(math.Log2(float64(p))) }
+func (p CPin) Pos() uint { return uint(math.Log2(float64(p))) }
 
 // String is the string representation "D#" of the pin, with # equal to Pos.
 func (p DPin) String() string { return fmt.Sprintf("D%d", p.Pos()) }
@@ -72,9 +72,9 @@ const (
 )
 
 // D returns a DPin bitmask with only the given bit at position pin set.
-// If the given pin position is negative or greater than 7, the invalid bitmask
-// (0) is returned.
-func D(pin int) DPin {
+// If the given pin position is greater than 7, the invalid bitmask (0) is
+// returned.
+func D(pin uint) DPin {
 	if pin >= 0 && pin < NumDPins {
 		return DPin(1 << pin)
 	} else {
@@ -83,10 +83,10 @@ func D(pin int) DPin {
 }
 
 // C returns a CPin bitmask with only the given bit at position pin set.
-// If the given pin position is negative or greater than 7, the invalid bitmask
-// (0) is returned.
-func C(pin int) CPin {
-	if pin >= 0 && pin < NumCPins {
+// If the given pin position is greater than 7, the invalid bitmask (0) is
+// returned.
+func C(pin uint) CPin {
+	if pin < NumCPins {
 		return CPin(1 << pin)
 	} else {
 		return CPin(0) // invalid CPin

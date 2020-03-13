@@ -164,7 +164,7 @@ func boing(lcd *ili9341.ILI9341) error {
 
 			for x := 0; x <= int(width); x++ {
 
-				bg := Background[(gy*screenWidth+gk)/8] & uint8(0x80>>(gk&0x07))
+				bg := Background[(gy*screenWidth+gk)/8] & uint8(0x80>>uint(gk&0x07))
 
 				if (bk >= 0) && (bk < BallWidth) && // Is current pixel row/column
 					(by >= 0) && (by < BallHeight) { // inside the ball bitmap area?

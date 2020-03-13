@@ -8,8 +8,8 @@ func TestPin(t *testing.T) {
 
 		ok := i > -1 && i < 8
 
-		d := D(i)
-		c := C(i)
+		d := D(uint(i))
+		c := C(uint(i))
 
 		if ok {
 
@@ -20,17 +20,17 @@ func TestPin(t *testing.T) {
 				t.Fatalf("expected C(%d) to be valid", i)
 			}
 
-			if (1 << i) != d.Mask() {
-				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<i)
+			if (1 << uint(i)) != d.Mask() {
+				t.Fatalf("D(%d) mask={%08b}, expected={%08b}", i, d.Mask(), 1<<uint(i))
 			}
-			if (1 << i) != c.Mask() {
-				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<i)
+			if (1 << uint(i)) != c.Mask() {
+				t.Fatalf("C(%d) mask={%08b}, expected={%08b}", i, c.Mask(), 1<<uint(i))
 			}
 
-			if i != d.Pos() {
+			if i != int(d.Pos()) {
 				t.Fatalf("D(%d) pos={%d}, expected={%d}", i, d.Pos(), i)
 			}
-			if i != c.Pos() {
+			if i != int(c.Pos()) {
 				t.Fatalf("C(%d) pos={%d}, expected={%d}", i, c.Pos(), i)
 			}
 

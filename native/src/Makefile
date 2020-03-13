@@ -102,7 +102,7 @@ endif
 optimize       = -Og
 debug          = -g
 warnings       = -Wall
-cflags         = -std=gnu11
+cflags        := $(CFLAGS) -std=gnu11
 linux-cflags   = $(cflags) -fPIC
 darwin-cflags  = $(cflags)
 

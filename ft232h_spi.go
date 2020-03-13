@@ -143,7 +143,7 @@ func (opt spiOption) mode() byte {
 func (opt spiOption) cs() Pin {
 	switch opt & spiCSMask {
 	case spiCSD3, spiCSD4, spiCSD5, spiCSD6, spiCSD7:
-		return D(int(opt>>2) + 3)
+		return D(uint(opt>>2) + 3)
 	default:
 		return DPin(0) // invalid pin
 	}
@@ -207,7 +207,7 @@ func spiPinConfigDefault() uint32 {
 		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D6 GPIO
 		{initDir: PinIN, initVal: PinLO, closeDir: PinIN, closeVal: PinLO}, // D7 GPIO
 	} {
-		pin |= D(i).spiPin(cfg)
+		pin |= D(uint(i)).spiPin(cfg)
 	}
 	return pin
 }
