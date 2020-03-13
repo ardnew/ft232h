@@ -1116,7 +1116,7 @@ FT_STATUS Mid_SetClock(FT_HANDLE handle, FT_DEVICE ftDevice, uint32 clock)
 	DWORD bytesWritten = 0;
 	DWORD bufIdx = 0;
 	uint8 valueH, valueL;
-	uint32 value;
+	uint32 value, adapt;
 	FT_STATUS status;
 
 	FN_ENTER;
@@ -1133,21 +1133,28 @@ FT_STATUS Mid_SetClock(FT_HANDLE handle, FT_DEVICE ftDevice, uint32 clock)
 		case FT_DEVICE_2232H:
 		case FT_DEVICE_4232H:
 		case FT_DEVICE_232H:
-			if(clock <= MID_6MHZ)
+			// if(clock <= MID_6MHZ)
+			// {
+			// 	DBG(MSG_DEBUG,"handle=0x%x value=0x%x ENABLE_CLOCK_DIVIDE\n",\
+			// 		(unsigned)handle,(unsigned)value);
+			// 	value = ENABLE_CLOCK_DIVIDE;
+			// 	status = varFunctionPtrLst.p_FT_Write(handle,&value,1,\
+			// 		&bytesWritten);
+			// 	CHECK_STATUS(status);
+			// 	value = (MID_6MHZ/clock) - 1;
+			// }
+			// else
 			{
-				DBG(MSG_DEBUG,"handle=0x%x value=0x%x ENABLE_CLOCK_DIVIDE\n",\
-					(unsigned)handle,(unsigned)value);
-				value = ENABLE_CLOCK_DIVIDE;
-				status = varFunctionPtrLst.p_FT_Write(handle,&value,1,\
+				DBG(MSG_DEBUG,"handle=0x%x value=0x%x DISABLE_ADAPTIVE_CLOCK\n",\
+					(unsigned)handle,(unsigned)DISABLE_ADAPTIVE_CLOCK);
+				adapt = DISABLE_ADAPTIVE_CLOCK;
+				status = varFunctionPtrLst.p_FT_Write(handle,&adapt,1,\
 					&bytesWritten);
 				CHECK_STATUS(status);
-				value = (MID_6MHZ/clock) - 1;
-			}
-			else
-			{
+
+				value = DISABLE_CLOCK_DIVIDE;
 				DBG(MSG_DEBUG,"handle=0x%x value=0x%x DISABLE_CLOCK_DIVIDE\n",\
 					(unsigned)handle,(unsigned)value);
-				value = DISABLE_CLOCK_DIVIDE;
 				status = varFunctionPtrLst.p_FT_Write(handle,&value,1,\
 					&bytesWritten);
 				CHECK_STATUS(status);
