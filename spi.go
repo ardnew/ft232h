@@ -1,6 +1,8 @@
 package ft232h
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // SPI stores interface configuration settings for an SPI master and provides
 // methods for reading and writing to SPI slave devices.
@@ -9,6 +11,11 @@ import "fmt"
 type SPI struct {
 	device *FT232H
 	config *spiConfig
+}
+
+// String returns a descriptive string of an SPI interface.
+func (spi *SPI) String() string {
+	return fmt.Sprintf("{ FT232H: %p, Config: %s }", spi.device, spi.config)
 }
 
 // SPIConfig holds all of the configuration settings for initializing an SPI
@@ -45,6 +52,20 @@ type spiConfig struct {
 	options    spiOption
 	pin        uint32 // port D pins ("low byte lines of MPSSE")
 	chipSelect Pin    // may be DPin (MPSSE low byte) or CPin (GPIO)
+}
+
+func (c spiConfig) String() string {
+	cr, pr, rs := float64(c.clockRate), 0, "Hz"
+	if cr/1000.0 > 1.0 {
+		cr, pr, rs = cr/1000.0, 0, "KHz"
+	}
+	if cr/1000.0 > 1.0 {
+		cr, pr, rs = cr/1000.0, 1, "MHz"
+	}
+
+	return fmt.Sprintf("{ Clock: \"%.*f %s\", Latency: \"%d ms\", Options: %s, "+
+		"Pin: %032b, ChipSelect: %q }",
+		pr, cr, rs, c.latency, c.options, c.pin, c.chipSelect)
 }
 
 // spiConfigDefault returns an spiConfig struct stored in the private
@@ -92,6 +113,11 @@ type SPIOption struct {
 
 // spiOption stores the various SPI configuration options as a 32-bit bitmap.
 type spiOption uint32
+
+func (o spiOption) String() string {
+	return fmt.Sprintf("{ ChipSelect: %q, ActiveLow: %t, SPIMode: %d }",
+		o.cs(), o.activeLow(), o.mode())
+}
 
 // Constants defining SPI operating modes (supports mode 0 and 2 only (CPHA=2))
 const (
@@ -141,9 +167,9 @@ func (opt spiOption) mode() byte {
 // cs reads the chip-select mask in the spiOption receiver opt and returns its
 // corresponding DPin as type Pin.
 func (opt spiOption) cs() Pin {
-	switch opt & spiCSMask {
+	switch b := opt & spiCSMask; b {
 	case spiCSD3, spiCSD4, spiCSD5, spiCSD6, spiCSD7:
-		return D(uint(opt>>2) + 3)
+		return D(uint(b>>2) + 3)
 	default:
 		return DPin(0) // invalid pin
 	}

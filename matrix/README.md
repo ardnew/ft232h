@@ -1,7 +1,7 @@
 # matrix
-This program generates the Travis CI configuration file (`.travis.yml`) containing jobs to compile and integration test the [`github.com/ardnew/ft232h`](https://github.com/ardnew/ft232h) Go module for all supported platforms. 
+This program generates the Travis CI configuration file (`.travis.yml`) containing jobs to compile and integration test the [`github.com/ardnew/ft232h`](https://github.com/ardnew/ft232h) Go module for all supported platforms.
 
-I was having trouble expressing the complex targets and dependencies using an implicit build matrix, and explicitly constructing all jobs seemed like a maintenance headache. 
+I was having trouble expressing the complex targets and dependencies using an implicit build matrix, and explicitly constructing all jobs seemed like a maintenance headache.
 
 ### Usage
 This program takes no arguments and prints the complete YAML content to stdout.
@@ -9,7 +9,7 @@ This program takes no arguments and prints the complete YAML content to stdout.
 For example, to replace the build matrix from this directory:
 
 ```sh
-go run . > ../.travis.yml 
+go run . > ../.travis.yml
 ```
 
 ### Generated Jobs
@@ -34,4 +34,4 @@ The integration test for each platform (and each supported version of Go) perfor
 4. Compile native driver `libft232h.a`
 5. Run module test suite via `go test`
 
-In total, the module is tested against x5 versions of Go for x4 Linux and x1 macOS architectures (5x(4+1)=25 build target configurations). 
+In total, the module is tested against `×5` versions of Go on `×1` macOS and `×4` Linux architectures (`5×(4+1)` = `×25` build target configurations).

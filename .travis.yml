@@ -8,6 +8,10 @@ dist: bionic
 
 osx_image: xcode11.3
 
+branches:
+    except:
+      - dev
+
 jobs:
     fast_finish: true
     include:
