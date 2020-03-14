@@ -2,7 +2,6 @@ package ft232h
 
 import (
 	"fmt"
-	"strings"
 )
 
 // GPIO stores interface configuration settings for the GPIO ("C" port) and
@@ -19,31 +18,33 @@ type GPIOConfig struct {
 	Val uint8
 }
 
+func (c *GPIOConfig) String() string {
+	sym := func(i uint) rune {
+		out := (c.Dir & (1 << i)) > 0
+		hi := (c.Val & (1 << i)) > 0
+		if out {
+			if hi {
+				return '^'
+			} else {
+				return '_'
+			}
+		} else {
+			if hi {
+				return '1'
+			} else {
+				return '0'
+			}
+		}
+	}
+	str := make([]rune, NumCPins)
+	for i := range str {
+		str[i] = sym(uint(i))
+	}
+	return string(str)
+}
+
 func (gpio *GPIO) String() string {
-
-	str := func(i uint) string {
-		set := func(u uint8) bool {
-			return (u & (1 << i)) > 0
-		}
-		var dir, val string
-		if set(gpio.config.Dir) {
-			dir = "OUT"
-		} else {
-			dir = "INP"
-		}
-		if set(gpio.config.Val) {
-			val = "1"
-		} else {
-			val = "0"
-		}
-		return fmt.Sprintf("{%s:%s}", dir, val)
-	}
-
-	s := []string{}
-	for i := uint(0); i < NumCPins; i++ {
-		s = append(s, str(i))
-	}
-	return fmt.Sprintf("{ %s }", strings.Join(s, ", "))
+	return fmt.Sprintf("{ FT232H: %p, Config: %q }", gpio.device, gpio.config)
 }
 
 // GPIOConfigDefault returns the default pin levels and directions for the GPIO

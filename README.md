@@ -4,8 +4,6 @@
 [drvurl]:https://godoc.org/github.com/ardnew/ft232h/drv
 [ntvimg]:https://godoc.org/github.com/ardnew/ft232h/native?status.svg
 [ntvurl]:https://godoc.org/github.com/ardnew/ft232h/native
-[cciimg]:https://circleci.com/gh/ardnew/ft232h.svg?style=shield
-[cciurl]:https://circleci.com/gh/ardnew/ft232h
 [tciimg]:https://travis-ci.com/ardnew/ft232h.svg?branch=master
 [tciurl]:https://travis-ci.com/ardnew/ft232h
 [repimg]:https://goreportcard.com/badge/github.com/ardnew/ft232h
@@ -18,7 +16,11 @@
 
 ## API features
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
-- [x] [**Documented**](#documentation) and [**integration tested**][cciurl]
+- [x] [**Documented**](#documentation) and [**integration tested**][tciurl]
+- [x] Multi-platform support (see: [**build matrix**](matrix))
+   - `go1.11`,`gp1.12`,`go1.13`,`go1.14`,`go-master`
+     - Linux: `amd64`,`386`,`arm64`,`arm`
+     - macOS: `amd64`
 - [x] `GPIO` - read/write
    - 8 dedicated pins available in any mode
    - 8-bit parallel, and 1-bit serial read/write operations

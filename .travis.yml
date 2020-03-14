@@ -1,5 +1,7 @@
 version: ~> 2.1
 
+if: (type != push) OR (branch =~ /^(master|v\d+\.\d+(\.\d+)?(-\S*)?)$/)
+
 language: go
 
 os: linux

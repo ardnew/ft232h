@@ -4,29 +4,10 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	//"runtime"
 	"strconv"
 	"strings"
 	"time"
-	//"github.com/Masterminds/semver"
 )
-
-//func validateGoVersion(constraint string) (bool, []error) {
-//	c, cerr := semver.NewConstraint(constraint)
-//	if nil != cerr {
-//		return false, []error{
-//			fmt.Errorf("invalid constraint: %s: %s", constraint, cerr),
-//		}
-//	}
-//	gov := strings.TrimPrefix(runtime.Version(), "go")
-//	v, verr := semver.NewVersion(gov)
-//	if nil != verr {
-//		return false, []error{
-//			fmt.Errorf("invalid Go version: %s: %s", gov, verr),
-//		}
-//	}
-//	return c.Validate(v)
-//}
 
 var (
 	numberRunes = []rune("0123456789")
