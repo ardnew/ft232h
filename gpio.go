@@ -38,7 +38,7 @@ func (c *GPIOConfig) String() string {
 	}
 	str := make([]rune, NumCPins)
 	for i := range str {
-		str[i] = sym(uint(i))
+		str[NumCPins-i-1] = sym(uint(i))
 	}
 	return string(str)
 }
@@ -56,6 +56,32 @@ func GPIOConfigDefault() *GPIOConfig {
 	}
 }
 
+// Write changes all pin direction and value configurations.
+// This does not transfer any changes to the GPIO interface.
+func (cfg *GPIOConfig) Write(dir uint8, val uint8) {
+	cfg.Dir, cfg.Val = dir, val
+}
+
+// Set changes the pin direction and value configuration.
+// This does not transfer any changes to the GPIO interface.
+func (cfg *GPIOConfig) Set(pin CPin, dir Dir, val bool) error {
+	if !pin.Valid() {
+		return fmt.Errorf("invalid pin: %v", pin)
+	}
+	switch dir {
+	case Output:
+		cfg.Dir |= pin.Mask()
+	case Input:
+		cfg.Dir &= ^pin.Mask()
+	}
+	if val {
+		cfg.Val |= pin.Mask()
+	} else {
+		cfg.Val &= ^pin.Mask()
+	}
+	return nil
+}
+
 // Init resets all GPIO pin directions and values using the most recently read
 // or written configuration, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Init() error {
@@ -65,8 +91,20 @@ func (gpio *GPIO) Init() error {
 // Config configures all GPIO pin directions and values to the settings defined
 // in the given cfg, returning a non-nil error if unsuccessful.
 func (gpio *GPIO) Config(cfg *GPIOConfig) error {
-	gpio.config.Dir = cfg.Dir
+	gpio.config.Write(cfg.Dir, cfg.Val)
 	return gpio.Write(cfg.Val)
+}
+
+// ConfigPin configures the given GPIO pin direction and value.
+// The direction and value of all other pins is set based on the most recently
+// read or written configuration determined prior to this call, and are all
+// updated during this call.
+// If you need more fine-grained control, use Read()/Write() directly.
+func (gpio *GPIO) ConfigPin(pin CPin, dir Dir, val bool) error {
+	if err := gpio.config.Set(pin, dir, val); nil != err {
+		return err
+	}
+	return gpio.Write(gpio.config.Val)
 }
 
 // Write sets the value of all output pins at once using the given bitmask val,
@@ -75,14 +113,11 @@ func (gpio *GPIO) Write(val uint8) error {
 
 	dir := gpio.config.Dir
 	val &= dir // set only the pins configured as OUTPUT
-
 	err := _FT_WriteGPIO(gpio, dir, val)
 	if nil != err {
 		return err
 	}
-
 	gpio.config.Val = val
-
 	return nil
 }
 
@@ -94,40 +129,28 @@ func (gpio *GPIO) Read() (uint8, error) {
 	if nil != err {
 		return 0, err
 	}
-
 	gpio.config.Val = val
-
 	return val, nil
 }
 
-// Set sets the given pin to output with the given val, returning a non-nil
-// error if unsuccessful.
-// The direction and value of all other pins is set based on the most recently
-// read or written configuration determined prior to calling Set, and are all
-// updated during the call to Set (AFTER writing the configuration). If you need
-// more fine-grained control, use Read/Write instead.
+// Set sets the given pin to output with the given val.
+// See ConfigPin() for other semantics.
 func (gpio *GPIO) Set(pin CPin, val bool) error {
-
-	dir := gpio.config.Dir | uint8(pin)
-	set := gpio.config.Val
-
-	if val {
-		set |= uint8(pin)
-	} else {
-		set &= ^uint8(pin)
-	}
-
-	return gpio.Config(&GPIOConfig{dir, set})
+	return gpio.ConfigPin(pin, Output, val)
 }
 
-// Get reads the value of the given pin, returning a non-nil error if
-// unsuccessful.
+// Get reads the current value of the given pin.
 func (gpio *GPIO) Get(pin CPin) (bool, error) {
-
 	set, err := gpio.Read()
 	if nil != err {
 		return false, err
 	}
+	return (set & pin.Mask()) > 0, nil
+}
 
-	return (set & uint8(pin)) > 0, nil
+// Chdir changes the GPIO direction of the given pin.
+// Use ConfigPin() to change both direction and value, or Config() to change all
+// pin directions (and values).
+func (gpio *GPIO) Chdir(pin CPin, dir Dir) error {
+	return gpio.ConfigPin(pin, dir, (gpio.config.Val&pin.Mask()) > 0)
 }
