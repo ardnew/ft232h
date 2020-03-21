@@ -16,21 +16,21 @@ func main() {
 		err error
 	)
 
-	ft, err = ft232h.NewFT232H()
+	ft, err = ft232h.New()
 	if nil != err {
-		log.Fatalf("NewFT232H(): %s", err)
+		log.Fatalf("New(): %s", err)
 	}
 	defer ft.Close()
 	log.Printf("%s", ft)
 
-	lcd, err = ili9341.NewILI9341(ft, &ili9341.Config{
+	lcd, err = ili9341.New(ft, &ili9341.Config{
 		PinCS:  ft232h.D(3),
 		PinDC:  ft232h.C(0),
 		PinRST: ft232h.C(4),
 		Rotate: ili9341.RotLeft,
 	})
 	if err != nil {
-		log.Fatalf("NewILI9341(): %+v", err)
+		log.Fatalf("New(): %+v", err)
 	}
 
 	if err := boing(lcd); nil != err {

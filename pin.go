@@ -54,6 +54,15 @@ func (p DPin) Equals(q Pin) bool { return q.IsMPSSE() && p.Mask() == q.Mask() }
 // otherwise false.
 func (p CPin) Equals(q Pin) bool { return !q.IsMPSSE() && p.Mask() == q.Mask() }
 
+// Dir represents the direction of a GPIO pin
+type Dir bool
+
+// Constants of GPIO pin direction type Dir
+const (
+	Input  Dir = false // GPIO input pins (bit clear)
+	Output Dir = true  // GPIO output pins (bit set)
+)
+
 // Types representing individual port pins.
 type (
 	DPin uint8 // pin bitmask on MPSSE low-byte lines (port "D" of FT232H)

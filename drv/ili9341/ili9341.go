@@ -19,7 +19,7 @@ type Config struct {
 	Rotate Rotation
 }
 
-func NewILI9341(ft *ft232h.FT232H, config *Config) (*ILI9341, error) {
+func New(ft *ft232h.FT232H, config *Config) (*ILI9341, error) {
 
 	if 0 == config.PinCS.Mask() {
 		return nil, fmt.Errorf("chip-select pin not provided")

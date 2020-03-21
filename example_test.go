@@ -13,23 +13,23 @@ func doStuff(ft *ft232h.FT232H) {
 }
 
 func Example() {
-	// Call NewFT232H() to open an FT232H device from a command line-oriented
+	// Call New() to open an FT232H device from a command line-oriented
 	// application to help select which FTDI device to use (by parsing predefined
 	// command line flags) if more than one is connected to the system.
 	//
 	// If no flags are provided, the first MPSSE-capable USB device found is used.
 	// Use -h to see all available flags.
 	//
-	// See the NewFT232H() godoc for other semantics related to the flag package.
+	// See the New() godoc for other semantics related to the flag package.
 	//
 	// To open a specific device without using command line flags, use one of the
-	// functions of form NewFT232HWith*(). In particular, NewFT232HWithMask(nil)
-	// will open the first compatible device found.
+	// functions of form Open*(). In particular, OpenMask(nil) will open the first
+	// compatible device found.
 
 	// Open first device that matches all command line flags (if any provided)
-	ft, err := ft232h.NewFT232H()
+	ft, err := ft232h.New()
 	if nil != err {
-		log.Fatalf("NewFT232H(): %s", err)
+		log.Fatalf("New(): %s", err)
 	}
 	defer ft.Close() // be sure to close device
 

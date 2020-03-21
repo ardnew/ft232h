@@ -11,17 +11,17 @@ import (
 // FT232H is the primary type for interacting with the device, holding the USB
 // device file descriptor configuration/status and individual communication
 // interfaces.
-// Open a connection with an FT232H by calling the NewFT232H() constructor.
+// Open a connection with an FT232H by calling the New() constructor.
 // If more than one FTDI device (any FTDI device, not just FT232H) is present on
-// the system, there are several constructor variations of form NewFT232HWith*()
-// to help distinguish which device to open. The default constructor NewFT232H()
-// will attempt to parse command line flags to select a specific device.
+// the system, there are several constructor variations of form Open*() to help
+// distinguish which device to open. The default constructor New() will attempt
+// to parse command line flags to select a specific device.
 // The only interface that is initialized by default is GPIO. You must call an
 // initialization method of one of the other interfaces before using it.
 type FT232H struct {
 	info *deviceInfo
 	mode Mode
-	open *OpenFlag
+	flag *Flag
 	I2C  *I2C
 	SPI  *SPI
 	GPIO *GPIO
@@ -29,13 +29,13 @@ type FT232H struct {
 
 // String constructs a string representation of an FT232H device.
 func (m *FT232H) String() string {
-	return fmt.Sprintf("{ Index: %s, Mode: %q, Open: %+v, I2C: %s, SPI: %+v, GPIO: %s }",
-		m.info, m.mode, m.open, m.I2C, m.SPI, m.GPIO)
+	return fmt.Sprintf("{ Index: %s, Mode: %q, Flag: %+v, I2C: %s, SPI: %+v, GPIO: %s }",
+		m.info, m.mode, m.flag, m.I2C, m.SPI, m.GPIO)
 }
 
-// OpenMask contains strings for each of the supported attributes used to
-// distinguish which FTDI device to open. See NewFT232HWithMask for semantics.
-type OpenMask struct {
+// Mask contains strings for each of the supported attributes used to
+// distinguish which FTDI device to open. See OpenMask for semantics.
+type Mask struct {
 	Index  string
 	VID    string
 	PID    string
@@ -43,10 +43,10 @@ type OpenMask struct {
 	Desc   string
 }
 
-// OpenFlag contains the attributes used to distinguish which FT232H device to
+// Flag contains the attributes used to distinguish which FT232H device to
 // open from a command-line-style string slice.
-type OpenFlag struct {
-	flag   *flag.FlagSet
+type Flag struct {
+	*flag.FlagSet
 	index  *int
 	vid    *int
 	pid    *int
@@ -55,11 +55,11 @@ type OpenFlag struct {
 }
 
 // String returns a descriptive string of all flags successfully parsed.
-func (o *OpenFlag) String() string {
-	if o.flag.NFlag() > 0 {
+func (f *Flag) String() string {
+	if f.NFlag() > 0 {
 		s := []string{}
-		o.flag.Visit(func(f *flag.Flag) {
-			s = append(s, fmt.Sprintf("-%s=%q", f.Name, f.Value))
+		f.Visit(func(a *flag.Flag) {
+			s = append(s, fmt.Sprintf("-%s=%q", a.Name, a.Value))
 		})
 		return fmt.Sprintf("{ %s }", strings.Join(s, " "))
 	} else {
@@ -67,66 +67,66 @@ func (o *OpenFlag) String() string {
 	}
 }
 
-// NewFT232H attempts to open a connection with the first MPSSE-capable USB
-// device matching flags given at the command line. Use -h to see all of the
-// supported flags.
-func NewFT232H() (*FT232H, error) {
-	return NewFT232HWithFlag(os.Args[1:], true)
+// New attempts to open a connection with the first MPSSE-capable USB device
+// matching flags given at the command line. Use -h to see all of the supported
+// flags.
+func New() (*FT232H, error) {
+	return OpenFlag(os.Args[1:], true)
 }
 
-// NewFT232HWithIndex attempts to open a connection with the MPSSE-capable USB
-// device enumerated at index (starting at 0). Returns non-nil error if
-// unsuccessful. A negative index is equivalent to 0.
-func NewFT232HWithIndex(index int) (*FT232H, error) {
+// OpenIndex attempts to open a connection with the MPSSE-capable USB device
+// enumerated at index (starting at 0). Returns non-nil error if unsuccessful.
+// A negative index is equivalent to 0.
+func OpenIndex(index int) (*FT232H, error) {
 	if index < 0 {
 		index = 0
 	}
-	return NewFT232HWithMask(&OpenMask{Index: fmt.Sprintf("%d", index)})
+	return OpenMask(&Mask{Index: fmt.Sprintf("%d", index)})
 }
 
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given vendor ID vid and product ID pid. Returns a non-nil
-// error if unsuccessful.
-func NewFT232HWithVIDPID(vid uint16, pid uint16) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{
+// OpenVIDPID attempts to open a connection with the first MPSSE-capable USB
+// device with given vendor ID vid and product ID pid. Returns a non-nil error
+// if unsuccessful.
+func OpenVIDPID(vid uint16, pid uint16) (*FT232H, error) {
+	return OpenMask(&Mask{
 		VID: fmt.Sprintf("%d", vid),
 		PID: fmt.Sprintf("%d", pid),
 	})
 }
 
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given serial no. Returns a non-nil error if unsuccessful.
+// OpenSerial attempts to open a connection with the first MPSSE-capable USB
+// device with given serial no. Returns a non-nil error if unsuccessful.
 // An empty string matches any serial number.
-func NewFT232HWithSerial(serial string) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{Serial: serial})
+func OpenSerial(serial string) (*FT232H, error) {
+	return OpenMask(&Mask{Serial: serial})
 }
 
-// NewFT232HWithIndex attempts to open a connection with the first MPSSE-capable
-// USB device with given description. Returns a non-nil error if unsuccessful.
+// OpenDesc attempts to open a connection with the first MPSSE-capable USB
+// device with given description. Returns a non-nil error if unsuccessful.
 // An empty string matches any description.
-func NewFT232HWithDesc(desc string) (*FT232H, error) {
-	return NewFT232HWithMask(&OpenMask{Desc: desc})
+func OpenDesc(desc string) (*FT232H, error) {
+	return OpenMask(&Mask{Desc: desc})
 }
 
-// NewFT232HWithFlag attempts to open a connection with the first MPSSE-capable
-// USB device matching flags given in a command-line-style string slice.
-// See type OpenFlag and func NewOpenFlag() for details.
-func NewFT232HWithFlag(arg []string, fatal bool) (*FT232H, error) {
-	o := NewOpenFlag(fatal)
+// OpenFlag attempts to open a connection with the first MPSSE-capable USB
+// device matching flags given in a command-line-style string slice.
+// See type Flag and func NewFlag() for details.
+func OpenFlag(arg []string, fatal bool) (*FT232H, error) {
+	f := NewFlag(fatal)
 	if len(arg) > 0 {
-		if err := o.Parse(arg); nil != err {
+		if err := f.Parse(arg); nil != err {
 		}
 	}
-	ft, err := NewFT232HWithMask(o.OpenMask())
+	ft, err := OpenMask(f.Mask())
 	if nil != err {
 		return nil, err
 	}
-	ft.open = o // keep a copy of the flagset for use/inspection by test suite
+	ft.flag = f // keep a copy of the flagset for use/inspection by test suite
 	return ft, nil
 }
 
-// NewFT232HWithMask attempts to open a connection with the first MPSSE-capable
-// USB device matching all of the given attributes. Returns a non-nil error if
+// OpenMask attempts to open a connection with the first MPSSE-capable USB
+// device matching all of the given attributes. Returns a non-nil error if
 // unsuccessful. Uses the first device found if mask is nil or all attributes
 // are empty strings.
 //
@@ -135,8 +135,8 @@ func NewFT232HWithFlag(arg []string, fatal bool) (*FT232H, error) {
 // integer attributes can be expressed in any base recognized by the Go grammar
 // for numeric literals (e.g., "13", "0b1101", "0xD", and "D" are all valid and
 // equivalent).
-func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
-	m := &FT232H{info: nil, mode: ModeNone, open: nil, I2C: nil, SPI: nil, GPIO: nil}
+func OpenMask(mask *Mask) (*FT232H, error) {
+	m := &FT232H{info: nil, mode: ModeNone, flag: nil, I2C: nil, SPI: nil, GPIO: nil}
 	if err := m.openDevice(mask); nil != err {
 		return nil, err
 	}
@@ -149,11 +149,11 @@ func NewFT232HWithMask(mask *OpenMask) (*FT232H, error) {
 	return m, nil
 }
 
-// NewOpenFlag constructs a new FlagSet with fields to describe an FT232H.
+// NewFlag constructs a new FlagSet with fields to describe an FT232H.
 // If fatal is true, the program will call os.Exit() if the flag parser fails on
 // malformed input, unrecognized flags are provided, or the default help flag -h
 // is received.
-func NewOpenFlag(fatal bool) *OpenFlag {
+func NewFlag(fatal bool) *Flag {
 	const (
 		indexDefault  int    = 0
 		vidDefault    int    = 0x0403
@@ -166,69 +166,68 @@ func NewOpenFlag(fatal bool) *OpenFlag {
 		onError = flag.ExitOnError
 	}
 	f := flag.NewFlagSet(os.Args[0]+" open flags", onError)
-	o := &OpenFlag{
-		flag:   f,
-		index:  f.Int("index", indexDefault, "open device enumerated at index `N` ≥ 0"),
-		vid:    f.Int("vid", vidDefault, "open device with vendor ID"),
-		pid:    f.Int("pid", pidDefault, "open device with product ID"),
-		serial: f.String("serial", serialDefault, "open device with identifier"),
-		desc:   f.String("desc", descDefault, "open device with description"),
+	return &Flag{
+		FlagSet: f,
+		index:   f.Int("index", indexDefault, "open device enumerated at index `N` ≥ 0"),
+		vid:     f.Int("vid", vidDefault, "open device with vendor ID"),
+		pid:     f.Int("pid", pidDefault, "open device with product ID"),
+		serial:  f.String("serial", serialDefault, "open device with identifier"),
+		desc:    f.String("desc", descDefault, "open device with description"),
 	}
-	return o
 }
 
-// BlessOpenFlag registers the flags in the flag package's default, top-level
+// BlessFlag registers the flags in the flag package's default, top-level
 // FlagSet var flag.CommandLine. This lets external packages (e.g. `go test`)
 // inherit these flags and not call os.Exit() when these otherwise unexpected
 // flags are received.
-func BlessOpenFlag() {
-	o := NewOpenFlag(false)
-	o.flag.VisitAll(func(f *flag.Flag) {
-		if nil == flag.Lookup(f.Name) {
-			flag.Var(f.Value, f.Name, f.Usage)
+func BlessFlag() {
+	f := NewFlag(false)
+	f.VisitAll(func(a *flag.Flag) {
+		if nil == flag.Lookup(a.Name) {
+			flag.Var(a.Value, a.Name, a.Usage)
 		}
 	})
 }
 
 // Parse parses flags from the given slice of strings arg into the fields of its
 // receiver, and silently ignores any unexpected flags.
-func (o *OpenFlag) Parse(arg []string) error {
+func (f *Flag) Parse(arg []string) error {
 
-	if o.flag.ErrorHandling() == flag.ContinueOnError {
-		o.flag.SetOutput(ioutil.Discard)
+	if f.ErrorHandling() == flag.ContinueOnError {
+		f.SetOutput(ioutil.Discard)
 	}
 
 	// extract only the known flags from arg, so that we don't die when the user
 	// provides unknown flags handled by other packages (e.g. `go test`)
 	parse, keep := []string{}, false
-	for _, a := range arg {
+	for _, r := range arg {
 
 		// we set keep=true when the element being processed is the argument to a
 		// known flag that was previously processed.
 		// always add it to the slice to be parsed.
 		if keep {
-			parse, keep = append(parse, a), false
+			parse, keep = append(parse, r), false
 			continue // start processing next element
 		}
 
 		// ignore non-flag elements
-		if !strings.HasPrefix(a, "-") {
+		if !strings.HasPrefix(r, "-") {
 			continue
 		}
 
 		// split any flags given as a single argument, i.e. "-flag=value" format,
 		// on the first "=" found, subsequent "=" are preserved in s[1]
-		s := strings.SplitN(a, "=", 2)
+		s := strings.SplitN(r, "=", 2)
 
-		// check if it is a known OpenFlag (but remove the flag prefix "-" first)
-		if f := o.flag.Lookup(strings.TrimPrefix(s[0], "-")); nil != f {
+		// check if it is a known Flag (but remove the flag prefix "-" first)
+		if a := f.Lookup(strings.TrimPrefix(s[0], "-")); nil != a {
 
-			// this is a recognized OpenFlag. copy it to the slice to be parsed.
-			parse = append(parse, a)
+			// this is a recognized Flag. copy it to the slice to be parsed.
+			parse = append(parse, r)
 
 			// we need to keep the next element in arg if this is a non-bool flag and
 			// its value was not already provided (i.e. using form "-flag=value").
-			switch f.Value.(type) {
+			switch a.Value.(type) {
 			case interface{ IsBoolFlag() }:
 				// bool flags cannot be expressed with form "-flag" "value"
 			default:
@@ -237,29 +236,29 @@ func (o *OpenFlag) Parse(arg []string) error {
 		}
 	}
 
-	if err := o.flag.Parse(parse); nil != err {
+	if err := f.FlagSet.Parse(parse); nil != err {
 		return err
 	}
 	return nil
 }
 
-// OpenMask constructs an OpenMask using the parsed flags explicitly provided.
-// If the OpenFlag has not yet been parsed, a zero OpenMask is returned that
+// Mask constructs an Mask using the parsed flags explicitly provided.
+// If the Flag has not yet been parsed, a zero Mask is returned that
 // matches all devices.
-func (o *OpenFlag) OpenMask() *OpenMask {
-	m := &OpenMask{}
-	o.flag.Visit(func(f *flag.Flag) {
-		switch f.Name {
+func (f *Flag) Mask() *Mask {
+	m := &Mask{}
+	f.Visit(func(a *flag.Flag) {
+		switch a.Name {
 		case "index":
-			m.Index = f.Value.String()
+			m.Index = a.Value.String()
 		case "vid":
-			m.VID = f.Value.String()
+			m.VID = a.Value.String()
 		case "pid":
-			m.PID = f.Value.String()
+			m.PID = a.Value.String()
 		case "serial":
-			m.Serial = f.Value.String()
+			m.Serial = a.Value.String()
 		case "desc":
-			m.Desc = f.Value.String()
+			m.Desc = a.Value.String()
 		}
 	})
 	return m
@@ -269,7 +268,7 @@ func (o *OpenFlag) OpenMask() *OpenMask {
 // Returns a non-nil error if unsuccessful. The error SDeviceNotFound is
 // returned if no device was found matching the given mask.
 // See NewFT232HWithMask for semantics.
-func (m *FT232H) openDevice(mask *OpenMask) error {
+func (ft *FT232H) openDevice(mask *Mask) error {
 
 	var (
 		dev []*deviceInfo
@@ -329,7 +328,7 @@ func (m *FT232H) openDevice(mask *OpenMask) error {
 	if err = sel.open(); nil != err {
 		return err
 	}
-	m.info = sel
+	ft.info = sel
 	return nil
 }
 
