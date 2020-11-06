@@ -21,7 +21,7 @@ var (
 		travis:  "~> 2.1",
 		lang:    "go",
 		os:      "linux",
-		langver: []string{"1.11.x", "1.12.x", "1.13.x", "1.14.x", "master"},
+		langver: []string{"1.11.x", "1.12.x", "1.13.x", "1.14.x", "1.15.x", "master"},
 		distro:  "bionic",
 		xcode:   "xcode11.3",
 		fast:    true,
