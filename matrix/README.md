@@ -25,6 +25,7 @@ Additionally, the following Go versions (`x` being most recent patch) are tested
 - Go `v1.12.x`
 - Go `v1.13.x`
 - Go `v1.14.x`
+- Go `v1.15.x`
 - Go `master`
 
 The integration test for each platform (and each supported version of Go) performs the following:
@@ -36,7 +37,7 @@ The integration test for each platform (and each supported version of Go) perfor
 
 > The `-short` flag is used because of the nature of this module. Being a device driver, the Travis CI build containers would need an actual FT232H device connected in order to run the full test suite. The reduced, `-short` suite acts as a smoke test that verifies linkage with the native driver `libft232h.a` as well as various utility types and methods. Omit the `-short` flag to perform full integration testing with a real FT232H device connected to the system.
 
-In total, the module is tested against `×5` versions of Go on `×1` macOS and `×4` Linux architectures (`5×(4+1)` = `×25` build target configurations).
+In total, the module is tested against `×6` versions of Go on `×1` macOS and `×4` Linux architectures (`6×(4+1)` = `×30` build target configurations).
 
 ## YAML Verification
 It can be a pain to spend so much time reconfiguring the generated `.travis.yml`, pushing upstream, wait for Travis to spawn jobs, and then find the builds all failing for a common configuration mistake (unrelated to what you're really trying to test). 
