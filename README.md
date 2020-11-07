@@ -18,7 +18,7 @@
 #### This software is a work-in-progress (WIP) and not ready for use. The following features have been implemented, but their interfaces ~~may~~**will** change.
 - [x] [**Documented**](#documentation) and [**integration tested**][tciurl]
 - [x] Multi-platform support (see: [**build matrix**](matrix))
-   - `go1.11`,`gp1.12`,`go1.13`,`go1.14`,`go-master`
+   - `go1.11`,`gp1.12`,`go1.13`,`go1.14`,`go1.15`,`go-master`
      - Linux: `amd64`,`386`,`arm64`,`arm`
      - macOS: `amd64`
 - [x] `GPIO` - read/write
