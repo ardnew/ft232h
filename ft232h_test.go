@@ -44,6 +44,33 @@ func TestNew(t *testing.T) {
 		}
 	}
 
+	t.Run("Info", func(t *testing.T) {
+		if ft.IsOpen() != ft.info.isOpen {
+			t.Errorf("IsOpen() != info.isOpen")
+		}
+		t.Logf("FT232H IsOpen: %v", ft.IsOpen())
+		if ft.Serial() != ft.info.serial {
+			t.Errorf("Serial() != info.serial")
+		}
+		t.Logf("FT232H Serial: %s", ft.Serial())
+		if ft.Desc() != ft.info.desc {
+			t.Errorf("Description() != info.description")
+		}
+		t.Logf("FT232H Description: %s", ft.Desc())
+		if ft.PID() != ft.info.pid {
+			t.Errorf("PID() != info.pid")
+		}
+		t.Logf("FT232H PID: %d", ft.PID())
+		if ft.VID() != ft.info.vid {
+			t.Errorf("VID() != info.vid")
+		}
+		t.Logf("FT232H VID: %d", ft.VID())
+		if ft.Index() != ft.info.index {
+			t.Errorf("Index() != info.index")
+		}
+		t.Logf("FT232H Index: %d", ft.Index())
+	})
+
 	err = ft.Close()
 	if nil != err {
 		t.Fatalf("could not close device: %v", err)
