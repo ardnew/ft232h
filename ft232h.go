@@ -33,6 +33,55 @@ func (m *FT232H) String() string {
 		m.info, m.mode, m.flag, m.I2C, m.SPI, m.GPIO)
 }
 
+func (m *FT232H) Index() int {
+	if m.info == nil {
+		return -1
+	}
+	return m.info.index
+}
+
+func (m *FT232H) Serial() string {
+	if m.info == nil {
+		return ""
+	}
+	return m.info.serial
+}
+
+func (m *FT232H) VID() uint32 {
+	if m.info == nil {
+		return 0
+	}
+	return m.info.vid
+}
+
+func (m *FT232H) PID() uint32 {
+	if m.info == nil {
+		return 0
+	}
+	return m.info.pid
+}
+
+func (m *FT232H) Desc() string {
+	if m.info == nil {
+		return ""
+	}
+	return m.info.desc
+}
+
+func (m *FT232H) IsOpen() bool {
+	if m.info == nil {
+		return false
+	}
+	return m.info.isOpen
+}
+
+func (m *FT232H) IsHiSpeed() bool {
+	if m.info == nil {
+		return false
+	}
+	return m.info.isHiSpeed
+}
+
 // Mask contains strings for each of the supported attributes used to
 // distinguish which FTDI device to open. See OpenMask for semantics.
 type Mask struct {
